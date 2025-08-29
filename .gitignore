@@ -1,0 +1,8 @@
+# Ignore build outputs and temp files
+/target
+/node_modules
+/.idea
+*.iml
+*.log
+.DS_Store
+.env
