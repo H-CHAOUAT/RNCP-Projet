@@ -1,0 +1,40 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: finfam-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: finfamdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./seed:/docker-entrypoint-initdb.d   # <--- seed folder
+
+  backend:
+    build: ./backend
+    container_name: finfam-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/finfamdb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      SPRING_SECURITY_USER_NAME: admin
+      SPRING_SECURITY_USER_PASSWORD: secret123
+
+  frontend:
+    build: ./frontend
+    container_name: finfam-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:   # <-- must only declare named volumes here
+  pgdata:
