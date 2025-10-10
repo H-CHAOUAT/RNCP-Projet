@@ -1,9 +1,14 @@
 package com.finfamplan.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.GrantedAuthority;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
+import java.util.Collection;
+import java.util.List;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -11,7 +16,7 @@ import java.time.LocalDateTime;
 @Table(name = "users")
 @Getter
 @Setter
-public class User {
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,18 +32,65 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    @JsonIgnore
     private String password;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String role;
+    private Role role;
 
     private BigDecimal salary = BigDecimal.ZERO;
     private BigDecimal balance = BigDecimal.ZERO;
 
-    @Column(name = "created_at", updatable = false, insertable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "updated_at", insertable = false)
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        // Return a list containing the user’s role
+        return List.of((GrantedAuthority) () -> role.name());
+    }
+
+    @Override
+    public String getUsername() {
+        // We use email as the unique identifier
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
+
 }
 
