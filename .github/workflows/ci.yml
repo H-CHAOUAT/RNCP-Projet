@@ -1,0 +1,65 @@
+name: CI - Build & Test Full Project
+
+on:
+  push:
+    branches: [ main, feature/ci-cd ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: finfamdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      # Checkout the project code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # -------------------
+      # 🧠 BACKEND
+      # -------------------
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build Backend with Maven
+        working-directory: backend
+        run: mvn -B clean package -DskipTests
+
+      - name: Run Backend Tests
+        working-directory: backend
+        run: mvn test
+
+      # -------------------
+      # 🎨 FRONTEND
+      # -------------------
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Frontend dependencies
+        working-directory: frontend
+        run: npm install
+
+      - name: Build Frontend
+        working-directory: frontend
+        run: npm run build
+
