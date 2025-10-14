@@ -1,6 +1,5 @@
 package com.finfamplan.backend.service;
 
-
 import com.finfamplan.backend.dto.LoginRequest;
 import com.finfamplan.backend.dto.RegisterRequest;
 import com.finfamplan.backend.dto.UserDto;
@@ -21,13 +20,11 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-
     @Transactional
     public UserDto register(RegisterRequest req) {
         if (userRepository.existsByEmail(req.getEmail())) {
             throw new IllegalArgumentException("Email already registered");
         }
-
         // ✅ convert String to Role enum safely
         Role role = toRole(req.getRole());
 
@@ -73,7 +70,6 @@ public class AuthService {
                 .expiresIn(900) // 15 minutes (match JwtService)
                 .build();
     }
-
     // helper: String -> Role enum
     private Role toRole(String raw) {
         try {
