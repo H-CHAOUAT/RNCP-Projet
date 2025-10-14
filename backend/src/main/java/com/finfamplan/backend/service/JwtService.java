@@ -17,14 +17,11 @@ import java.util.function.Function;
 @Service
 public class JwtService {
 
-
     private static final String SECRET_KEY = "MY_SUPER_SECRET_KEY_MY_SUPER_SECRET_KEY"; // must be at least 32 chars
-
     // generate a token for a user
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
-
     // internal method with claims
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return Jwts.builder()
@@ -35,24 +32,20 @@ public class JwtService {
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
-
     // validate token
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String username = extractUsername(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
     }
-
     // extract username (email) from token
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
-
     // generic claim extractor
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
-
     private Claims extractAllClaims(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(getSignInKey())
@@ -60,7 +53,6 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody();
     }
-
     private boolean isTokenExpired(String token) {
         return extractExpiration(token).before(new Date());
     }
@@ -68,7 +60,6 @@ public class JwtService {
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
-
     // build signing key
     private Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
