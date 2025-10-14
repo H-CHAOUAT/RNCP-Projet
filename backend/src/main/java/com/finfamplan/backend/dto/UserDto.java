@@ -2,7 +2,6 @@ package com.finfamplan.backend.dto;
 
 import lombok.Builder;
 import lombok.Data;
-
 import java.math.BigDecimal;
 
 @Builder
