@@ -20,6 +20,7 @@ public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
     private Long userId;
 
     @Column(nullable = false, name = "first_name")
@@ -67,7 +68,6 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        // We use email as the unique identifier
         return email;
     }
 
