@@ -19,14 +19,14 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Disable CSRF for testing via Swagger
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/auth/**",          // ✅ Allow login/register
-                                "/swagger-ui/**",        // ✅ Allow Swagger UI
-                                "/v3/api-docs/**",       // ✅ Allow API docs
-                                "/swagger-resources/**", // ✅ Allow Swagger resources
-                                "/webjars/**"            // ✅ Allow static Swagger assets
+                                "/api/auth/**",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
                         ).permitAll()
                         .anyRequest().permitAll()   // temporarily allow all for testing
                 )
