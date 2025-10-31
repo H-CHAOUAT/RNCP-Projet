@@ -1,33 +1,51 @@
 import { useState } from "react";
 import LoginForm from "../components/organisms/LoginForm";
-import Signup from "../components/organisms/Signup";
-import AuthCard from "../components/molecules/AuthCard";
+import SignupForm from "../components/organisms/SignupForm";
 
 export default function AuthPage() {
     const [isLogin, setIsLogin] = useState(true);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <AuthCard title={isLogin ? "Welcome Back 👋" : "Create Account 📝"}>
-                {isLogin ? <LoginForm /> : <Signup />}
-                <p className="text-center mt-4 text-sm">
-                    {isLogin ? (
-                        <>
-                            Don’t have an account?{" "}
-                            <button onClick={() => setIsLogin(false)} className="text-blue-600 hover:underline">
-                                Sign up
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            Already have an account?{" "}
-                            <button onClick={() => setIsLogin(true)} className="text-blue-600 hover:underline">
-                                Sign in
-                            </button>
-                        </>
-                    )}
-                </p>
-            </AuthCard>
+        <div className="flex flex-col md:flex-row min-h-screen">
+            {/* Left side - Logo / Branding */}
+            <div className="bg-[#322D29] text-white flex flex-col items-center justify-center w-full md:w-1/2 p-10">
+                <div className="bg-[#8B8878] w-48 h-48 mb-6"></div> {/* Placeholder for logo */}
+                <h1 className="text-2xl font-bold">FinFamPlan</h1>
+                <p className="text-sm mt-2 opacity-80">Plan together. Grow together.</p>
+            </div>
+
+            {/* Right side - Auth form */}
+            <div className="flex flex-col justify-center items-center w-full md:w-1/2 bg-[#EFE9E1] p-10">
+                <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-8">
+                    <h2 className="text-2xl font-semibold text-center text-[#322D29] mb-6">
+                        {isLogin ? "Log In" : "Sign Up"}
+                    </h2>
+                    {isLogin ? <LoginForm /> : <SignupForm />}
+                    <p className="text-center text-sm text-gray-600 mt-6">
+                        {isLogin ? (
+                            <>
+                                Don’t have an account?{" "}
+                                <button
+                                    onClick={() => setIsLogin(false)}
+                                    className="text-[#72383D] hover:underline"
+                                >
+                                    Sign Up
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                Already have an account?{" "}
+                                <button
+                                    onClick={() => setIsLogin(true)}
+                                    className="text-[#72383D] hover:underline"
+                                >
+                                    Log In
+                                </button>
+                            </>
+                        )}
+                    </p>
+                </div>
+            </div>
         </div>
     );
 }
