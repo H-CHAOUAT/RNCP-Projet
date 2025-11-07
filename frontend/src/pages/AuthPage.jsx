@@ -7,7 +7,6 @@ export default function AuthPage() {
 
     return (
         <div className="flex flex-col md:flex-row min-h-screen">
-            {/* Left side - Logo / Branding */}
             <div className="bg-[#322D29] text-white flex flex-col items-center justify-center w-full md:w-1/2 p-10">
                 <div className="bg-[#8B8878] w-48 h-48 mb-6"></div> {/* Placeholder for logo */}
                 <h1 className="text-2xl font-bold">FinFamPlan</h1>
