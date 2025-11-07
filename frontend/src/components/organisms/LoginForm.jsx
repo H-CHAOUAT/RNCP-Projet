@@ -26,20 +26,22 @@ export default function LoginForm() {
             if (response.ok) {
                 const data = await response.json();
 
-                // If backend sends token, store it
+                // save token
                 if (data.token) localStorage.setItem("token", data.token);
 
-                const hasSeenWelcome = localStorage.getItem("hasSeenWelcome");
+                // ✅ personalized welcome key based on email
+                const welcomeKey = `hasSeenWelcome:${formData.email}`;
+                const hasSeenWelcome = localStorage.getItem(welcomeKey);
 
                 alert("✅ Login successful!");
 
-                // If it's the first login, show the Welcome page
                 if (!hasSeenWelcome) {
-                    localStorage.setItem("hasSeenWelcome", "true");
-                    setTimeout(() => navigate("/welcome"), 1000);
+                    // ✅ first time login → show welcome page
+                    localStorage.setItem(welcomeKey, "true");
+                    navigate("/welcome");
                 } else {
-                    // Otherwise go directly to dashboard/home
-                    setTimeout(() => navigate("/dashboard"), 1000);
+                    // ✅ next login → go to dashboard
+                    navigate("/dashboard");
                 }
             } else {
                 alert("❌ Invalid email or password.");
@@ -62,6 +64,7 @@ export default function LoginForm() {
                 onChange={handleChange}
                 placeholder="email@example.com"
             />
+
             <FormField
                 label="Password"
                 type="password"
@@ -70,6 +73,7 @@ export default function LoginForm() {
                 onChange={handleChange}
                 placeholder="••••••••"
             />
+
             <Button type="submit" className="w-full mt-2" disabled={loading}>
                 {loading ? "Logging in..." : "Login"}
             </Button>
