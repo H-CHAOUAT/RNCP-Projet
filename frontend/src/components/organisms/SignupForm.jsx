@@ -8,12 +8,15 @@ export default function SignupForm() {
         firstName: "",
         lastName: "",
         email: "",
-        password: "",
+        password: ""
     });
+
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -27,27 +30,30 @@ export default function SignupForm() {
             });
 
             if (response.ok) {
-                alert("✅ Account created successfully! Redirecting to login...");
-                setTimeout(() => navigate("/login"), 2000);
+                alert("✅ Account created! Redirecting to login...");
+                setTimeout(() => {
+                    navigate("/login");
+                }, 700);
             } else {
                 alert("❌ Registration failed.");
             }
-        } catch (err) {
-            console.error("SignupForm error:", err);
-            alert("Something went wrong. Please try again.");
+        } catch (error) {
+            console.error(error);
+            alert("⚠️ Something went wrong.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit}>
-            <FormField label="First Name" type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="John" />
-            <FormField label="Last Name" type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Doe" />
-            <FormField label="Email" type="email" name="email" value={formData.email} onChange={handleChange} placeholder="email@example.com" />
-            <FormField label="Password" type="password" name="password" value={formData.password} onChange={handleChange} placeholder="••••••••" />
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <FormField label="First Name" name="firstName" value={formData.firstName} onChange={handleChange} />
+            <FormField label="Last Name" name="lastName" value={formData.lastName} onChange={handleChange} />
+            <FormField label="Email" type="email" name="email" value={formData.email} onChange={handleChange} />
+            <FormField label="Password" type="password" name="password" value={formData.password} onChange={handleChange} />
+
             <Button type="submit" className="w-full mt-2" disabled={loading}>
-                {loading ? "Creating Account..." : "Sign Up"}
+                {loading ? "Creating account..." : "Sign Up"}
             </Button>
         </form>
     );
