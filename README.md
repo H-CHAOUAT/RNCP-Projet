@@ -1,130 +1,94 @@
-🚀 FinFamPlan
-FinFamPlan est une application full-stack de gestion financière familiale.
- Elle permet l’inscription, la connexion, la gestion de session et un écran d’accueil personnalisé pour les nouveaux utilisateurs.
-L’objectif final : accompagner les familles dans la gestion de leur budget, leurs dépenses et leurs objectifs financiers.
+## 🚀 FinFamPlan
 
+FinFamPlan est une application **full-stack de gestion financière familiale**.  
+Elle permet l’inscription, la connexion, la gestion de session et un écran d’accueil personnalisé pour les nouveaux utilisateurs.
 
-🧱 Architecture du Projet
-Voici une vue globale et simple de l’architecture :
+🎯 **Objectif final** : accompagner les familles dans la gestion de leur budget, de leurs dépenses et de leurs objectifs financiers.
+
+---
+
+## 🧱 Architecture du Projet
+
+Vue globale de l’architecture technique :
+
+```text
 ┌──────────────────────────────────────────┐
 │                FRONTEND                  │
-│         React + Vite + Tailwind          │
+│         React + Vite + TailwindCSS       │
 └──────────────────────────┬───────────────┘
-                           │ REST API calls
+                           │ REST API
                            ▼
 ┌──────────────────────────────────────────┐
 │                BACKEND                   │
 │               Spring Boot                │
 │     Controllers — Services — Repos       │
-│  Security: Argon2 + Spring Security      │
+│  Security: Spring Security + Argon2      │
 │  Flyway: DB migrations                   │
 └──────────────────────────┬───────────────┘
                            │ JDBC
                            ▼
 ┌──────────────────────────────────────────┐
-│               POSTGRESQL                 
-│      Database 
+│               POSTGRESQL                 │
+│               Database                   │
 └──────────────────────────────────────────┘
+```
+---
+## 📦 Fonctionnalités Actuelles
 
-
-📦 Fonctionnalités Actuelles
 🔐 Authentification
-  -Inscription utilisateur
-  -Connexion (email + mot de passe)
-  -Stockage sécurisé des mots de passe via Argon2
-  -Redirection automatique :
-      -1ère connexion → Welcome Page
+
+- Inscription utilisateur
+- Connexion (email + mot de passe)
+- Stockage sécurisé des mots de passe avec Argon2 (OWASP recommandé)
+  - Redirection automatique :
+      -Première connexion → Welcome Page
       -Connexions suivantes → Dashboard
 
-
 🎨 Frontend
-     -Design basé sur Atomic Design
-     -UI responsive
-     -TailwindCSS configuré (en local + Docker)
 
+    - React + Vite
+    - TailwindCSS
+    - Design basé sur Atomic Design
+        atoms / molecules / organisms / layouts / pages
+    - UI responsive
+    - Communication frontend ↔ backend fonctionnelle
+    - Routing protégé (préparation pour JWT)
 
 🐳 DevOps
-  -Tout le projet tourne sous Docker Compose
-  -Services :
-    -Frontend
-    -Backend
-    -PostgreSQL Database
 
+- Projet entièrement dockerisé avec Docker Compose
+-     Services :
+        Frontend
+        Backend
+        PostgreSQL
+- CI/CD avec GitHub Actions
+        Build backend
+        Tests backend
+        Build frontend
+---
+## 🛠️ Installation & Lancement
 
+    ▶️ Lancer avec Docker
+        docker-compose up --build
+    Accès aux services :
+        Frontend → http://localhost:5173
+        Backend → http://localhost:8080
+        PostgreSQL → localhost:5432
+    ⏹️ Arrêter les services
+        docker-compose down
+---
+## 💾 Structure du Projet
+### Backend
+<p align="center"> <img src="docs/images/StructureBackend.png" alt="Backend Structure" width="700"/> </p>
 
-🛠️ Installation & Lancement
-▶️ 1. Lancer avec Docker
-  docker-compose up --build
+### Frontend
+<p align="center"> <img src="docs/images/StructureFrontEnd.png" alt="Frontend Structure" width="700"/> </p>
 
-    Frontend → http://localhost:5173
-    Backend → http://localhost:8080
-    PostgreSQL → localhost:5432
+---
+## 💾 Documentation API
+![API](docs/images/documentationAPI.png)
 
+---
+# 🤝 Contributeur
 
-Stopper les services :
-  docker-compose down
-
-
-💾 Structure du Projet
-project-root/
-│
-├── frontend/
-│   ├── src/components/atoms
-│   ├── src/components/molecules
-│   ├── src/components/organisms
-│   ├── src/pages
-│   ├── App.jsx
-│   └── Dockerfile
-│
-├── backend/
-│   ├── controller/
-│   ├── model/
-│   ├── repository/
-│   ├── config/
-│   ├── service/
-│   └── Dockerfile
-│
-└── docker-compose.yml
-
-
-📘 API Documentation
-🟢 POST /api/auth/register
-Créer un utilisateur.
-Body :
-{
-  "firstName": "John",
-  "lastName": "Doe",
-  "email": "john@gmail.com",
-  "password": "123456",
-  "role": "PARENT"
-}
-
-Response :
-{
-  "message": "User registered successfully"
-}
-
-
-🟢 POST /api/auth/login
-Connexion utilisateur.
-Body :
-{
-  "email": "john@gmail.com",
-  "password": "123456"
-}
-
-Response :
-{
-  "token": "example-token",
-  "role": "PARENT"
-}
-
-
-🧪 Tests
-Les tests unitaires et d'intégration seront ajoutés dans les prochaines étapes du développement.
-
-
-🤝 Contributeur
-👤 Hala Chaouat 
-
-
+👤 Hala Chaouat
