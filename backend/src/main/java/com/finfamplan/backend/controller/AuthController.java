@@ -39,6 +39,7 @@ public class AuthController {
 
         return Map.of("success", true, "message", "User registered successfully");
     }
+
     @PostMapping("/login")
     public Map<String, Object> login(@RequestBody @Valid LoginRequest request) {
         return userRepository.findByEmail(request.getEmail())
@@ -49,6 +50,8 @@ public class AuthController {
                                 "message", "Login successful",
                                 "user", Map.of(
                                         "id", user.getUserId(),
+                                        "firstName", user.getFirstName(),    // ✅ ADDED
+                                        "lastName", user.getLastName(),      // ✅ ADDED
                                         "email", user.getEmail(),
                                         "role", user.getRole().name()
                                 )
