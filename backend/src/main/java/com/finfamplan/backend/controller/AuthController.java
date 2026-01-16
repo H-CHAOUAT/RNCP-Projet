@@ -42,6 +42,7 @@ public class AuthController {
 
         return Map.of("success", true, "message", "User registered successfully");
     }
+
     @PostMapping("/login")
     public Map<String, Object> login(@RequestBody @Valid LoginRequest request) {
         return userRepository.findByEmail(request.getEmail())
@@ -59,8 +60,7 @@ public class AuthController {
                         response.put("user", userMap);
 
                         return response;
-                    }
-                    else {
+                    }else {
                         return Map.<String, Object>of("success", false, "message", "Invalid password");
                     }
                 })

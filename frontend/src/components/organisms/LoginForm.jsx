@@ -26,7 +26,12 @@ export default function LoginForm() {
             if (response.ok) {
                 const data = await response.json();
 
-                // save token
+                // ✅ Save user info to localStorage
+                if (data.user) {
+                    localStorage.setItem("user", JSON.stringify(data.user));
+                }
+
+                // save token (when you add JWT later)
                 if (data.token) localStorage.setItem("token", data.token);
 
                 // ✅ personalized welcome key based on email
