@@ -10,7 +10,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+
+import java.util.HashMap;
 import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -44,16 +47,20 @@ public class AuthController {
         return userRepository.findByEmail(request.getEmail())
                 .map(user -> {
                     if (encoder.matches(request.getPassword(), user.getPassword())) {
-                        return Map.<String, Object>of(
-                                "success", true,
-                                "message", "Login successful",
-                                "user", Map.of(
-                                        "id", user.getUserId(),
-                                        "email", user.getEmail(),
-                                        "role", user.getRole().name()
-                                )
-                        );
-                    } else {
+
+                        Map<String, Object> userMap = new HashMap<>();
+                        userMap.put("id", user.getUserId());          // can be null in tests
+                        userMap.put("email", user.getEmail());
+                        userMap.put("role", user.getRole() != null ? user.getRole().name() : null);
+
+                        Map<String, Object> response = new HashMap<>();
+                        response.put("success", true);
+                        response.put("message", "Login successful");
+                        response.put("user", userMap);
+
+                        return response;
+                    }
+                    else {
                         return Map.<String, Object>of("success", false, "message", "Invalid password");
                     }
                 })
