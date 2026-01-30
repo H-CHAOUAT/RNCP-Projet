@@ -1,8 +1,19 @@
+import { Outlet } from "react-router-dom";
+import ProfileTabs from "../components/organisms/profile/ProfileTabs.jsx";
+
 export default function ProfilePage() {
     return (
-        <div className="rounded-lg border bg-white p-6">
-            <h1 className="text-xl font-semibold">Profile</h1>
-            <p className="mt-2 text-slate-600">Profile page (coming soon).</p>
+        <div className="mx-auto max-w-5xl space-y-6">
+            <div>
+                <h1 className="text-2xl font-semibold text-slate-900">Settings</h1>
+                <p className="mt-1 text-slate-600">
+                    Manage your personal info, preferences, security, and family.
+                </p>
+            </div>
+
+            <ProfileTabs />
+
+            <Outlet />
         </div>
     );
 }
