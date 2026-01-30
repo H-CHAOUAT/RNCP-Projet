@@ -1,6 +1,8 @@
 package com.finfamplan.backend.controller;
 
 import com.finfamplan.backend.model.User;
+import com.finfamplan.backend.dto.UpdateUserRequest;
+import jakarta.validation.Valid;
 import com.finfamplan.backend.repository.UserRepository;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,15 +36,14 @@ public class UserController {
         return userRepository.save(user);
     }
 
-    // UPDATE user
     @PutMapping("/{id}")
     public User updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
         return userRepository.findById(id).map(user -> {
             user.setFirstName(updatedUser.getFirstName());
             user.setLastName(updatedUser.getLastName());
             user.setEmail(updatedUser.getEmail());
-            user.setPassword(updatedUser.getPassword());
-            user.setRole(updatedUser.getRole());
+
+            // ✅ DO NOT update password/role here
             return userRepository.save(user);
         }).orElseThrow();
     }

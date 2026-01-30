@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FormField from "../molecules/FormField";
+import Input from "../atoms/Input";
 import Button from "../atoms/Button";
 
 export default function LoginForm() {
@@ -41,11 +42,9 @@ export default function LoginForm() {
                 alert("✅ Login successful!");
 
                 if (!hasSeenWelcome) {
-                    // ✅ first time login → show welcome page
                     localStorage.setItem(welcomeKey, "true");
                     navigate("/welcome");
                 } else {
-                    // ✅ next login → go to dashboard
                     navigate("/dashboard");
                 }
             } else {
@@ -61,23 +60,25 @@ export default function LoginForm() {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <FormField
-                label="Email"
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="email@example.com"
-            />
+            <FormField label="Email">
+                <Input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Email"
+                />
+            </FormField>
 
-            <FormField
-                label="Password"
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                placeholder="••••••••"
-            />
+            <FormField label="Password">
+                <Input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                />
+            </FormField>
 
             <Button type="submit" className="w-full mt-2" disabled={loading}>
                 {loading ? "Logging in..." : "Login"}
