@@ -1,17 +1,15 @@
 import Label from "../atoms/Label";
-import Input from "../atoms/Input";
 
-export default function FormField({ label, type, value, onChange, placeholder, name }) {
+export default function FormField({ label, hint, children }) {
     return (
         <div className="mb-4">
-            <Label>{label}</Label>
-            <Input
-                type={type}
-                name={name}            // ✅ must pass down
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-            />
+            {label && <Label>{label}</Label>}
+            {children}
+            {hint && (
+                <p className="mt-1 text-xs text-gray-500">
+                    {hint}
+                </p>
+            )}
         </div>
     );
 }

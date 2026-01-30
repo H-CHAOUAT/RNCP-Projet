@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FormField from "../molecules/FormField";
+import Input from "../atoms/Input";
 import Button from "../atoms/Button";
 
 export default function SignupForm() {
@@ -8,7 +9,7 @@ export default function SignupForm() {
         firstName: "",
         lastName: "",
         email: "",
-        password: ""
+        password: "",
     });
 
     const [loading, setLoading] = useState(false);
@@ -47,10 +48,43 @@ export default function SignupForm() {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <FormField label="First Name" name="firstName" value={formData.firstName} onChange={handleChange} />
-            <FormField label="Last Name" name="lastName" value={formData.lastName} onChange={handleChange} />
-            <FormField label="Email" type="email" name="email" value={formData.email} onChange={handleChange} />
-            <FormField label="Password" type="password" name="password" value={formData.password} onChange={handleChange} />
+            <FormField label="First Name">
+                <Input
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    placeholder="First name"
+                />
+            </FormField>
+
+            <FormField label="Last Name">
+                <Input
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    placeholder="Last name"
+                />
+            </FormField>
+
+            <FormField label="Email">
+                <Input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Email"
+                />
+            </FormField>
+
+            <FormField label="Password">
+                <Input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="••••••••"
+                />
+            </FormField>
 
             <Button type="submit" className="w-full mt-2" disabled={loading}>
                 {loading ? "Creating account..." : "Sign Up"}
