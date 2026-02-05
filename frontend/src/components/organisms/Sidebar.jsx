@@ -9,6 +9,8 @@ export default function Sidebar({ open, onClose }) {
     const navigate = useNavigate();
 
     const handleLogout = () => {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
         navigate("/");
     };
 
@@ -27,7 +29,13 @@ export default function Sidebar({ open, onClose }) {
             <div className="flex h-full flex-col p-4">
                 {/* Brand */}
                 <div className="mb-4 flex items-center justify-between">
-                    <div className="text-lg font-bold text-slate-900">FinFamPlan</div>
+                    <NavLink
+                        to="/dashboard"
+                        className="text-lg font-bold text-slate-900 hover:opacity-80"
+                        onClick={onClose}
+                    >
+                        FinFamPlan
+                    </NavLink>
 
                     <button
                         className="rounded-md p-2 hover:bg-slate-100 md:hidden"
@@ -44,11 +52,10 @@ export default function Sidebar({ open, onClose }) {
                         Dashboard
                     </NavLink>
 
-                    <NavLink to="/profile" className={linkClass} onClick={onClose}>
-                        Profile
+                    <NavLink to="/financial" className={linkClass} onClick={onClose}>
+                        Financial profile
                     </NavLink>
 
-                    {/* placeholders so you can add later */}
                     <NavLink to="/transactions" className={linkClass} onClick={onClose}>
                         Transactions
                     </NavLink>
@@ -66,6 +73,9 @@ export default function Sidebar({ open, onClose }) {
                     <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                         Quick actions
                     </div>
+                    <NavLink to="/bills" className={linkClass} onClick={onClose}>
+                        + Add bills
+                    </NavLink>
                     <div className="space-y-2">
                         <button className="w-full rounded-md bg-white px-3 py-2 text-left text-sm hover:bg-slate-100">
                             + Add expense

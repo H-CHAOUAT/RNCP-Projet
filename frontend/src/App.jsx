@@ -8,7 +8,7 @@ import PersonalTab from "./components/organisms/profile/PersonalTab";
 import PreferencesTab from "./components/organisms/profile/PreferencesTab";
 import SecurityTab from "./components/organisms/profile/SecurityTab";
 import FamilyTab from "./components/organisms/profile/FamilyTab";
-
+import FinancialPage from "./pages/FinancialPage.jsx";
 
 export default function App() {
     return (
@@ -30,13 +30,15 @@ export default function App() {
                         <Route path="security" element={<SecurityTab />} />
                         <Route path="family" element={<FamilyTab />} />
                     </Route>
-
+                    <Route path="/financial" element={<FinancialPage />} />
                     {/* ✅ Backward compatibility */}
                     <Route path="/profile/*" element={<Navigate to="/settings" replace />} />
 
                     <Route path="/transactions" element={<div>Transactions</div>} />
                     <Route path="/analysis" element={<div>Analysis</div>} />
                     <Route path="/family" element={<div>Family</div>} />
+                    <Route path="/financial" element={<div>Financial profile</div>} />
+                    <Route path="/bills" element={<div>Bills</div>} />
                 </Route>
             </Routes>
         </Router>
