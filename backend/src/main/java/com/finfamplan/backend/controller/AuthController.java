@@ -52,6 +52,8 @@ public class AuthController {
                         Map<String, Object> userMap = new HashMap<>();
                         userMap.put("id", user.getUserId());          // can be null in tests
                         userMap.put("email", user.getEmail());
+                        userMap.put("firstName", user.getFirstName());
+                        userMap.put("lastName", user.getLastName());
                         userMap.put("role", user.getRole() != null ? user.getRole().name() : null);
 
                         Map<String, Object> response = new HashMap<>();
