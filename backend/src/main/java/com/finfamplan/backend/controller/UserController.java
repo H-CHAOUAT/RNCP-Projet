@@ -4,8 +4,9 @@ import com.finfamplan.backend.model.User;
 import com.finfamplan.backend.dto.UpdateUserRequest;
 import jakarta.validation.Valid;
 import com.finfamplan.backend.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 
 @RestController
@@ -18,19 +19,16 @@ public class UserController {
         this.userRepository = userRepository;
     }
 
-    // GET all users
     @GetMapping
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    // GET user by ID
     @GetMapping("/{id}")
     public User getUserById(@PathVariable Long id) {
         return userRepository.findById(id).orElseThrow();
     }
 
-    // CREATE user
     @PostMapping
     public User createUser(@RequestBody User user) {
         return userRepository.save(user);
@@ -39,16 +37,23 @@ public class UserController {
     @PutMapping("/{id}")
     public User updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
         return userRepository.findById(id).map(user -> {
+
+            String newEmail = updatedUser.getEmail().trim().toLowerCase();
+
+            if (!newEmail.equalsIgnoreCase(user.getEmail()) && userRepository.existsByEmail(newEmail)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already in use");
+            }
+
             user.setFirstName(updatedUser.getFirstName());
             user.setLastName(updatedUser.getLastName());
             user.setEmail(updatedUser.getEmail());
 
-            // ✅ DO NOT update password/role here
             return userRepository.save(user);
-        }).orElseThrow();
+        }).orElseThrow(() -> new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "User not found"
+        ));
     }
 
-    // DELETE user
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id) {
         userRepository.deleteById(id);
