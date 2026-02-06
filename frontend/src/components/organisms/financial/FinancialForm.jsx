@@ -148,11 +148,7 @@ export default function FinancialForm() {
                     </Select>
                 </FormField>
 
-                <div className="flex items-end">
-                    <Button onClick={handleSave} disabled={saving} className="w-full">
-                        {saving ? "Saving..." : "Save"}
-                    </Button>
-                </div>
+
             </div>
 
             <div>
@@ -200,6 +196,11 @@ export default function FinancialForm() {
                         + Add expense
                     </Button>
                 </div>
+            </div>
+            <div className="flex items-end">
+                <Button onClick={handleSave} disabled={saving} className="w-full">
+                    {saving ? "Saving..." : "Save"}
+                </Button>
             </div>
         </div>
     );
