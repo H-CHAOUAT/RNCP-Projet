@@ -33,8 +33,8 @@ export default function SignupForm() {
             if (response.ok) {
                 alert("✅ Account created! Redirecting to login...");
                 setTimeout(() => {
-                    navigate("/login");
-                }, 700);
+                    navigate("/login", {replace: true});
+                }, 300);
             } else {
                 alert("❌ Registration failed.");
             }
