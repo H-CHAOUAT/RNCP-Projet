@@ -36,7 +36,7 @@ public class AuthController {
         u.setFirstName(request.getFirstName());
         u.setLastName(request.getLastName());
         u.setEmail(request.getEmail());
-        u.setPassword(encoder.encode(request.getPassword())); // encode password
+        u.setPassword(encoder.encode(request.getPassword()));
         u.setRole(Role.valueOf(request.getRole().toUpperCase()));
         userRepository.save(u);
 
@@ -50,7 +50,7 @@ public class AuthController {
                     if (encoder.matches(request.getPassword(), user.getPassword())) {
 
                         Map<String, Object> userMap = new HashMap<>();
-                        userMap.put("id", user.getUserId());          // can be null in tests
+                        userMap.put("id", user.getUserId());
                         userMap.put("email", user.getEmail());
                         userMap.put("firstName", user.getFirstName());
                         userMap.put("lastName", user.getLastName());
