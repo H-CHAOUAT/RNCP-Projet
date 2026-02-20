@@ -20,6 +20,10 @@ export default function FinancialForm() {
 
     const [monthlyIncome, setMonthlyIncome] = useState("0");
     const [currency, setCurrency] = useState("EUR");
+    const [currentBalance, setCurrentBalance] = useState("0");
+    const [paydayDay, setPaydayDay] = useState("1");
+    const [lastSalaryApplied, setLastSalaryApplied] = useState(null);
+
     const [expenses, setExpenses] = useState([
         { category: "RENT", amount: "0" },
     ]);
@@ -49,6 +53,10 @@ export default function FinancialForm() {
                 const data = await res.json();
                 setMonthlyIncome(String(data.monthlyIncome ?? "0"));
                 setCurrency(data.currency ?? "EUR");
+                setCurrentBalance(String(data.currentBalance ?? "0"));
+                setPaydayDay(String(data.paydayDay ?? "1"));
+                setLastSalaryApplied(data.lastSalaryApplied ?? null);
+
                 setExpenses(
                     (data.expenses?.length ? data.expenses : [{ category: "RENT", amount: "0" }]).map((e) => ({
                         category: e.category ?? "OTHER",
@@ -88,6 +96,8 @@ export default function FinancialForm() {
         try {
             const payload = {
                 monthlyIncome: Number(monthlyIncome || 0),
+                currentBalance: Number(currentBalance || 0),
+                paydayDay: Number(paydayDay || 1),
                 currency,
                 expenses: expenses.map((e) => ({
                     category: e.category,
@@ -102,6 +112,19 @@ export default function FinancialForm() {
             });
 
             if (res.ok) {
+                const updated = await res.json();
+                setMonthlyIncome(String(updated.monthlyIncome ?? "0"));
+                setCurrentBalance(String(updated.currentBalance ?? "0"));
+                setPaydayDay(String(updated.paydayDay ?? "1"));
+                setCurrency(updated.currency ?? "EUR");
+                setLastSalaryApplied(updated.lastSalaryApplied ?? null);
+
+                setExpenses(
+                    (updated.expenses?.length ? updated.expenses : [{ category: "RENT", amount: "0" }]).map((e) => ({
+                        category: e.category ?? "OTHER",
+                        amount: String(e.amount ?? "0"),
+                    }))
+                );
                 alert("✅ Financial info saved!");
             } else {
                 const text = await res.text();
@@ -125,9 +148,9 @@ export default function FinancialForm() {
 
     return (
         <div className="rounded-xl border bg-white p-6 space-y-6">
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 md:grid-cols-4">
                 <FormField label="Monthly income">
-                    <Input
+                <Input
                         type="number"
                         name="monthlyIncome"
                         value={monthlyIncome}
@@ -147,10 +170,35 @@ export default function FinancialForm() {
                         <option value="GBP">GBP</option>
                     </Select>
                 </FormField>
+                <FormField label="Current balance">
+                    <Input
+                        type="number"
+                        name="currentBalance"
+                        value={currentBalance}
+                        onChange={(e) => setCurrentBalance(e.target.value)}
+                        placeholder="0"
+                    />
+                </FormField>
 
-
+                <FormField label="Payday day (1–28)">
+                    <Input
+                        type="number"
+                        name="paydayDay"
+                        value={paydayDay}
+                        onChange={(e) => setPaydayDay(e.target.value)}
+                        placeholder="1"
+                        min="1"
+                        max="28"
+                    />
+                </FormField>
             </div>
 
+            {lastSalaryApplied && (
+                <div className="text-sm text-slate-600">
+                    Last salary applied:
+                    <span className="font-semibold ml-1">{lastSalaryApplied}</span>
+                </div>
+            )}
             <div>
                 <h2 className="text-lg font-semibold text-slate-900">Fixed monthly expenses</h2>
                 <p className="text-sm text-slate-600">Add categories and amounts.</p>

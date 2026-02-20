@@ -1,0 +1,4 @@
+ALTER TABLE financial_profiles
+    ADD COLUMN IF NOT EXISTS initial_balance NUMERIC(12,2) NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS payday_day INT NOT NULL DEFAULT 1,
+    ADD COLUMN IF NOT EXISTS last_salary_applied DATE;
