@@ -1,6 +1,7 @@
 package com.finfamplan.backend.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.time.LocalDate;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -39,6 +40,16 @@ public class FinancialProfile {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "current_balance", nullable = false)
+    private BigDecimal currentBalance = BigDecimal.ZERO;
+
+    @Column(name = "payday_day", nullable = false)
+    private Integer paydayDay = 1; // 1..28 recommended
+
+    @Column(name = "last_salary_applied")
+    private LocalDate lastSalaryApplied;
+
 
     @PrePersist
     protected void onCreate() {
