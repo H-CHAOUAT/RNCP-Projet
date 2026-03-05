@@ -12,6 +12,5 @@ public class UserDto {
     private String lastName;
     private String email;
     private String role;
-    private BigDecimal salary;
-    private BigDecimal balance;
+
 }
