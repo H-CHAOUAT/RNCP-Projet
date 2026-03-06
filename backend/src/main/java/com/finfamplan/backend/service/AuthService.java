@@ -43,8 +43,6 @@ public class AuthService {
                 .lastName(saved.getLastName())
                 .email(saved.getEmail())
                 .role(saved.getRole().name()) // return as string if UserDto expects String
-                .salary(saved.getSalary())
-                .balance(saved.getBalance())
                 .build();
     }
 
