@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.Setter;
 import java.util.Collection;
 import java.util.List;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -40,10 +39,7 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Role role;
 
-    private BigDecimal salary = BigDecimal.ZERO;
-    private BigDecimal balance = BigDecimal.ZERO;
-
-    @Column(name = "created_at")
+        @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")

@@ -67,6 +67,10 @@ export default function Sidebar({ open, onClose }) {
                     <NavLink to="/family" className={linkClass} onClick={onClose}>
                         Family
                     </NavLink>
+
+                    <NavLink to="/goals" className={linkClass} onClick={onClose}>
+                        Goals
+                    </NavLink>
                 </nav>
 
                 <div className="mt-6 rounded-lg border bg-slate-50 p-3">
