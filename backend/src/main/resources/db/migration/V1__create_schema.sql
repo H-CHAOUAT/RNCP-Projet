@@ -1,8 +1,3 @@
--- ===========================================
---  V1__create_schema.sql
---  Initial schema for FinFam backend
--- ===========================================
-
 CREATE TABLE IF NOT EXISTS family_groups (
                                              id BIGSERIAL PRIMARY KEY,
                                              name VARCHAR(100) NOT NULL,

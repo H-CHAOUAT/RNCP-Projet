@@ -1,8 +1,6 @@
--- 1) add column (nullable at first to avoid breaking existing rows)
 ALTER TABLE goals
     ADD COLUMN IF NOT EXISTS created_by_user_id BIGINT;
 
--- 2) add FK (Postgres does NOT support "IF NOT EXISTS" on ADD CONSTRAINT)
 DO $$
 BEGIN
     IF NOT EXISTS (
