@@ -1,58 +1,46 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import FormField from "../molecules/FormField";
-import Input from "../atoms/Input";
 import Button from "../atoms/Button";
 
 export default function LoginForm() {
-    const [formData, setFormData] = useState({ email: "", password: "" });
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError("");
         setLoading(true);
-
         try {
-            const response = await fetch("http://localhost:8080/api/auth/login", {
+            const response = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({ email, password }),
             });
 
-            if (response.ok) {
-                const data = await response.json();
+            const data = await response.json();
 
-                // ✅ Save user info to localStorage
-                if (data.user) {
-                    localStorage.setItem("user", JSON.stringify(data.user));
-                }
+            if (response.ok && data.success) {
+                // FIX: store data.user (has id, firstName, lastName, role)
+                // The backend wraps user info inside { success, message, user: {...} }
+                localStorage.setItem("user", JSON.stringify(data.user));
 
-                // save token (when you add JWT later)
-                if (data.token) localStorage.setItem("token", data.token);
-
-                // ✅ personalized welcome key based on email
-                const welcomeKey = `hasSeenWelcome:${formData.email}`;
-                const hasSeenWelcome = localStorage.getItem(welcomeKey);
-
-                alert("✅ Login successful!");
-
+                // First-time login → welcome page; returning user → dashboard
+                // We use a flag in localStorage to track this
+                const hasSeenWelcome = localStorage.getItem(`welcome_seen_${data.user.id}`);
                 if (!hasSeenWelcome) {
-                    localStorage.setItem(welcomeKey, "true");
+                    localStorage.setItem(`welcome_seen_${data.user.id}`, "1");
                     navigate("/welcome");
                 } else {
                     navigate("/dashboard");
                 }
             } else {
-                alert("❌ Invalid email or password.");
+                setError("❌ " + (data.message || "Invalid email or password."));
             }
-        } catch (error) {
-            console.error("Login error:", error);
-            alert("⚠️ Something went wrong. Please try again.");
+        } catch {
+            setError("❌ Cannot reach server. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -60,28 +48,35 @@ export default function LoginForm() {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-            <FormField label="Email">
-                <Input
+            {error && (
+                <div className="rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700">
+                    {error}
+                </div>
+            )}
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                <input
                     type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="email@example.com"
+                    required
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#72383D]"
                 />
-            </FormField>
-
-            <FormField label="Password">
-                <Input
+            </div>
+            <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                <input
                     type="password"
-                    name="password"
-                    value={formData.password}
-                    onChange={handleChange}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
+                    required
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#72383D]"
                 />
-            </FormField>
-
-            <Button type="submit" className="w-full mt-2" disabled={loading}>
-                {loading ? "Logging in..." : "Login"}
+            </div>
+            <Button type="submit" className="w-full bg-[#72383D] text-white hover:bg-[#5e2d31]" disabled={loading}>
+                {loading ? "Signing in..." : "Sign In"}
             </Button>
         </form>
     );

@@ -1,0 +1,6 @@
+ALTER TABLE bills ADD COLUMN IF NOT EXISTS user_id BIGINT REFERENCES users(user_id) ON DELETE CASCADE;
+ALTER TABLE bills ADD COLUMN IF NOT EXISTS description VARCHAR(255);
+
+ALTER TABLE bills ALTER COLUMN family_group_id TYPE BIGINT;
+
+CREATE INDEX IF NOT EXISTS idx_bills_user_id ON bills(user_id);

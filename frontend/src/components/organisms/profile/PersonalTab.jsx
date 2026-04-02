@@ -39,7 +39,7 @@ export default function PersonalTab() {
                 return;
             }
 
-            const response = await fetch(`http://localhost:8080/api/users/${userId}`, {
+            const response = await fetch(`/api/users/${userId}`, {
                 headers: { "Content-Type": "application/json" },
             });
 
@@ -78,7 +78,7 @@ export default function PersonalTab() {
                 return;
             }
 
-            const response = await fetch(`http://localhost:8080/api/users/${userId}`, {
+            const response = await fetch(`/api/users/${userId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(profile),
@@ -118,7 +118,7 @@ export default function PersonalTab() {
 
     if (loading) {
         return (
-            <div className="rounded-xl border bg-white p-8 text-center">
+            <div className="rounded-xl border bg-white p-8 text-left">
                 <p className="text-gray-500">Loading profile...</p>
             </div>
         );
@@ -128,7 +128,7 @@ export default function PersonalTab() {
         <div className="rounded-xl border bg-white p-6 shadow-sm">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-semibold text-slate-900">Personal Information</h2>
+                    <h2 className="text-xl font-semibold text-dark">Personal Information</h2>
                     <p className="mt-1 text-sm text-gray-600">
                         Update your name and email.
                     </p>

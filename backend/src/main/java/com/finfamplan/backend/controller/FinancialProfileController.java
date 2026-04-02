@@ -3,84 +3,74 @@ package com.finfamplan.backend.controller;
 import com.finfamplan.backend.dto.FinancialProfileDto;
 import com.finfamplan.backend.model.ExpenseItem;
 import com.finfamplan.backend.model.FinancialProfile;
+import com.finfamplan.backend.model.Transaction;
 import com.finfamplan.backend.model.User;
 import com.finfamplan.backend.repository.FinancialProfileRepository;
+import com.finfamplan.backend.repository.TransactionRepository;
 import com.finfamplan.backend.repository.UserRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/financial")
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*")
 public class FinancialProfileController {
 
     private final FinancialProfileRepository financialRepo;
-    private final UserRepository userRepo;
+    private final UserRepository             userRepo;
+    private final TransactionRepository      txRepo;
 
-    public FinancialProfileController(FinancialProfileRepository financialRepo, UserRepository userRepo) {
-        this.financialRepo = financialRepo;
-        this.userRepo = userRepo;
+    public FinancialProfileController(FinancialProfileRepository f,
+                                      UserRepository u,
+                                      TransactionRepository t) {
+        financialRepo = f; userRepo = u; txRepo = t;
     }
 
     @GetMapping("/{userId}")
     public FinancialProfileDto get(@PathVariable Long userId) {
         FinancialProfile profile = financialRepo.findByUser_UserId(userId)
-                .orElseGet(() -> {
-                    User user = userRepo.findById(userId).orElseThrow();
-                    FinancialProfile fp = new FinancialProfile();
-                    fp.setUser(user);
-                    fp.setMonthlyIncome(BigDecimal.ZERO);
-                    fp.setCurrency("EUR");
-                    fp.setExpenses(new ArrayList<>());
+                .orElseGet(() -> createDefault(userId));
 
-                    fp.setCurrentBalance(BigDecimal.ZERO);
-                    fp.setPaydayDay(1);
-                    fp.setLastSalaryApplied(null);
-
-                    return financialRepo.save(fp);
-                });
-
-        boolean changed = applyMonthlyUpdateIfDue(profile);
-        if (changed) profile = financialRepo.save(profile);
+        // Check if payday has arrived and salary is not yet confirmed
+        checkPaydayPending(profile);
+        if (Boolean.TRUE.equals(profile.getSalaryPendingConfirmation())) {
+            financialRepo.save(profile);
+        }
 
         return toDto(profile);
     }
 
     @PutMapping("/{userId}")
-    public FinancialProfileDto upsert(@PathVariable Long userId, @RequestBody FinancialProfileDto dto) {
+    public FinancialProfileDto upsert(@PathVariable Long userId,
+                                      @RequestBody FinancialProfileDto dto) {
         User user = userRepo.findById(userId).orElseThrow();
-
         FinancialProfile profile = financialRepo.findByUser_UserId(userId)
-                .orElseGet(() -> {
-                    FinancialProfile fp = new FinancialProfile();
-                    fp.setUser(user);
-                    fp.setExpenses(new ArrayList<>());
-                    fp.setMonthlyIncome(BigDecimal.ZERO);
-                    fp.setCurrency("EUR");
-                    fp.setCurrentBalance(BigDecimal.ZERO);
-                    fp.setPaydayDay(1);
-                    fp.setLastSalaryApplied(null);
-                    return fp;
-                });
+                .orElseGet(() -> createDefault(userId));
+        profile.setUser(user);
 
         profile.setMonthlyIncome(dto.monthlyIncome != null ? dto.monthlyIncome : BigDecimal.ZERO);
         profile.setCurrency(dto.currency != null ? dto.currency : "EUR");
 
-        if (dto.currentBalance != null) {
+        // Only update balance if NOT locked yet
+        if (!Boolean.TRUE.equals(profile.getBalanceLocked()) && dto.currentBalance != null) {
             profile.setCurrentBalance(dto.currentBalance);
         }
 
+        // Lock balance if dto requests it
+        if (Boolean.TRUE.equals(dto.balanceLocked)) {
+            profile.setBalanceLocked(true);
+        }
+
         if (dto.paydayDay != null) {
-            int pd = Math.max(1, Math.min(28, dto.paydayDay));
-            profile.setPaydayDay(pd);
+            profile.setPaydayDay(Math.max(1, Math.min(28, dto.paydayDay)));
         }
 
         if (profile.getExpenses() == null) profile.setExpenses(new ArrayList<>());
         profile.getExpenses().clear();
-
         if (dto.expenses != null) {
             for (FinancialProfileDto.ExpenseItemDto e : dto.expenses) {
                 ExpenseItem item = new ExpenseItem();
@@ -91,61 +81,144 @@ public class FinancialProfileController {
             }
         }
 
-        // apply monthly salary + fixed expenses if due
-        applyMonthlyUpdateIfDue(profile);
-
-        FinancialProfile saved = financialRepo.save(profile);
-        return toDto(saved);
+        checkPaydayPending(profile);
+        return toDto(financialRepo.save(profile));
     }
 
     /**
-     * Applies salary once per month on paydayDay and subtracts fixed expenses once as well.
-     * Returns true if something changed.
+     * POST /api/financial/{userId}/confirm-salary
+     * User confirms they received their salary.
+     * → Add salary to balance
+     * → Deduct all fixed expenses
+     * → Record transactions
+     * → Mark lastSalaryApplied = today
+     * → Clear pending flag
      */
-    private boolean applyMonthlyUpdateIfDue(FinancialProfile profile) {
-        LocalDate today = LocalDate.now();
-        int payday = profile.getPaydayDay() != null ? profile.getPaydayDay() : 1;
-
-        // Avoid invalid dates: we clamp to 28 already, so safe.
-        LocalDate thisMonthPayday = LocalDate.of(today.getYear(), today.getMonth(), payday);
-
-        // If today is before payday, do nothing
-        if (today.isBefore(thisMonthPayday)) return false;
-
-        // If already applied this month, do nothing
-        LocalDate last = profile.getLastSalaryApplied();
-        if (last != null && last.getYear() == today.getYear() && last.getMonth() == today.getMonth()) {
-            return false;
-        }
+    @PostMapping("/{userId}/confirm-salary")
+    public FinancialProfileDto confirmSalary(@PathVariable Long userId) {
+        User user = userRepo.findById(userId).orElseThrow();
+        FinancialProfile profile = financialRepo.findByUser_UserId(userId).orElseThrow();
 
         BigDecimal income = profile.getMonthlyIncome() != null ? profile.getMonthlyIncome() : BigDecimal.ZERO;
+        BigDecimal expenses = BigDecimal.ZERO;
 
-        BigDecimal expensesTotal = BigDecimal.ZERO;
         if (profile.getExpenses() != null) {
             for (ExpenseItem e : profile.getExpenses()) {
-                if (e.getAmount() != null) expensesTotal = expensesTotal.add(e.getAmount());
+                if (e.getAmount() != null) {
+                    expenses = expenses.add(e.getAmount());
+                }
             }
         }
 
         BigDecimal current = profile.getCurrentBalance() != null ? profile.getCurrentBalance() : BigDecimal.ZERO;
+        BigDecimal net = income.subtract(expenses);
 
-        // Apply: currentBalance = currentBalance + income - fixedExpenses
-        profile.setCurrentBalance(current.add(income).subtract(expensesTotal));
-        profile.setLastSalaryApplied(thisMonthPayday);
+        profile.setCurrentBalance(current.add(net));
+        profile.setLastSalaryApplied(LocalDate.now());
+        profile.setSalaryPendingConfirmation(false);
+        profile.setLastSalaryDismissedDate(null);
 
-        return true;
+        if (income.compareTo(BigDecimal.ZERO) > 0) {
+            try {
+                Transaction tx = new Transaction();
+                tx.setUser(user);
+                tx.setType("INCOME");
+                tx.setCategory("SALARY");
+                tx.setAmount(income);
+                tx.setDescription("Monthly salary confirmed");
+                tx.setDate(LocalDate.now());
+                txRepo.save(tx);
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (expenses.compareTo(BigDecimal.ZERO) > 0) {
+            try {
+                Transaction tx = new Transaction();
+                tx.setUser(user);
+                tx.setType("EXPENSE");
+                tx.setCategory("FIXED_EXPENSES");
+                tx.setAmount(expenses);
+                tx.setDescription("Monthly fixed expenses deducted on payday");
+                tx.setDate(LocalDate.now());
+                txRepo.save(tx);
+            } catch (Exception ignored) {
+            }
+        }
+        return toDto(financialRepo.save(profile));
     }
 
-    private FinancialProfileDto toDto(FinancialProfile profile) {
+    /**
+     * POST /api/financial/{userId}/dismiss-salary
+     * User says they haven't received salary yet — remind again tomorrow.
+     */
+    @PostMapping("/{userId}/dismiss-salary")
+    public Map<String, Object> dismissSalary(@PathVariable Long userId) {
+        FinancialProfile profile = financialRepo.findByUser_UserId(userId).orElseThrow();
+        profile.setLastSalaryDismissedDate(LocalDate.now());
+        profile.setSalaryPendingConfirmation(false);
+        financialRepo.save(profile);
+        return Map.of("dismissed", true);
+    }
+
+    private void checkPaydayPending(FinancialProfile profile) {
+        LocalDate today = LocalDate.now();
+        int payday = profile.getPaydayDay() != null ? profile.getPaydayDay() : 1;
+
+        if (today.getDayOfMonth() < payday) {
+            profile.setSalaryPendingConfirmation(false);
+            profile.setLastSalaryDismissedDate(null);
+            return;
+        }
+
+        LocalDate lastApplied = profile.getLastSalaryApplied();
+        if (lastApplied != null
+                && lastApplied.getYear() == today.getYear()
+                && lastApplied.getMonth() == today.getMonth()) {
+            profile.setSalaryPendingConfirmation(false);
+            profile.setLastSalaryDismissedDate(null);
+            return;
+        }
+
+        LocalDate dismissed = profile.getLastSalaryDismissedDate();
+
+        if (dismissed != null && dismissed.equals(today)) {
+            profile.setSalaryPendingConfirmation(false);
+            return;
+        }
+
+        profile.setSalaryPendingConfirmation(true);
+    }
+
+    private FinancialProfile createDefault(Long userId) {
+        User user = userRepo.findById(userId).orElseThrow();
+
+        FinancialProfile fp = new FinancialProfile();
+        fp.setUser(user);
+        fp.setMonthlyIncome(BigDecimal.ZERO);
+        fp.setCurrency("EUR");
+        fp.setExpenses(new ArrayList<>());
+        fp.setCurrentBalance(BigDecimal.ZERO);
+        fp.setPaydayDay(1);
+        fp.setBalanceLocked(false);
+        fp.setSalaryPendingConfirmation(false);
+        fp.setLastSalaryDismissedDate(null);
+
+        return financialRepo.save(fp);
+    }
+
+    private FinancialProfileDto toDto(FinancialProfile p) {
         FinancialProfileDto dto = new FinancialProfileDto();
-        dto.monthlyIncome = profile.getMonthlyIncome();
-        dto.currency = profile.getCurrency();
+        dto.monthlyIncome = p.getMonthlyIncome();
+        dto.currency = p.getCurrency();
+        dto.currentBalance = p.getCurrentBalance();
+        dto.paydayDay = p.getPaydayDay();
+        dto.lastSalaryApplied = p.getLastSalaryApplied();
+        dto.balanceLocked = p.getBalanceLocked();
+        dto.salaryPendingConfirmation = p.getSalaryPendingConfirmation();
+        dto.lastSalaryDismissedDate = p.getLastSalaryDismissedDate();
 
-        dto.currentBalance = profile.getCurrentBalance();
-        dto.paydayDay = profile.getPaydayDay();
-        dto.lastSalaryApplied = profile.getLastSalaryApplied();
-
-        dto.expenses = profile.getExpenses().stream().map(e -> {
+        dto.expenses = p.getExpenses().stream().map(e -> {
             FinancialProfileDto.ExpenseItemDto ed = new FinancialProfileDto.ExpenseItemDto();
             ed.category = e.getCategory();
             ed.amount = e.getAmount();

@@ -1,18 +1,10 @@
-export default function Select({
-                                   value,
-                                   onChange,
-                                   name,
-                                   children,
-                                   className = "",
-                                   ...props
-                               }) {
+export default function Select({ children, value, onChange, name, className = "" }) {
     return (
         <select
-            name={name}
-            value={value ?? ""}
+            value={value}
             onChange={onChange}
-            className={`border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${className}`}
-            {...props}
+            name={name}
+            className={`border border-wineLight/40 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-wine focus:border-wine outline-none bg-white text-dark transition ${className}`}
         >
             {children}
         </select>

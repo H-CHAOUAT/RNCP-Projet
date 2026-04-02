@@ -8,10 +8,10 @@ export default function GoalCard({ goal }) {
         <div className="rounded-lg border p-4">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <div className="font-semibold text-slate-900">{goal.title}</div>
+                    <div className="font-semibold text-dark">{goal.title}</div>
 
                     {goal.description ? (
-                        <div className="text-sm text-slate-600 mt-1">{goal.description}</div>
+                        <div className="text-sm text-dark/50 mt-1">{goal.description}</div>
                     ) : null}
 
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
