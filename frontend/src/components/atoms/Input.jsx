@@ -1,31 +1,15 @@
-export default function Input({
-                                  type = "text",
-                                  value,
-                                  onChange,
-                                  placeholder,
-                                  name,
-                                  className = "",
-                              }) {
+export default function Input({ type = "text", value, onChange, placeholder, className = "", min, max, name, ...props }) {
     return (
         <input
             type={type}
-            name={name}
-            value={value ?? ""}
+            value={value}
             onChange={onChange}
             placeholder={placeholder}
-            className={`
-        w-full
-        rounded-lg
-        border border-gray-300
-        px-3 py-2
-        text-gray-900
-        placeholder-gray-400
-        focus:outline-none
-        focus:ring-2
-        focus:ring-blue-500
-        focus:border-blue-500
-        ${className}
-      `}
+            name={name}
+            min={min}
+            max={max}
+            className={`border border-wineLight/40 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-wine focus:border-wine outline-none bg-white text-dark placeholder:text-wineLight transition ${className}`}
+            {...props}
         />
     );
 }

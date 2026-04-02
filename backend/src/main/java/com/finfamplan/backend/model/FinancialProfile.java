@@ -1,64 +1,133 @@
 package com.finfamplan.backend.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.time.LocalDate;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
-
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
 @Table(name = "financial_profiles")
-@Getter
-@Setter
 public class FinancialProfile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
-    @JsonIgnore
     private User user;
 
-    @Column(name = "monthly_income", nullable = false)
+    @Column(nullable = false)
     private BigDecimal monthlyIncome = BigDecimal.ZERO;
 
     @Column(nullable = false)
     private String currency = "EUR";
 
+    @Column(nullable = false)
+    private BigDecimal currentBalance = BigDecimal.ZERO;
+
+    @Column(nullable = false)
+    private Integer paydayDay = 1;
+
+    private LocalDate lastSalaryApplied;
+
+    @Column(nullable = false)
+    private Boolean balanceLocked = false;
+
+    @Column(nullable = false)
+    private Boolean salaryPendingConfirmation = false;
+
+    private LocalDate lastSalaryDismissedDate;
+
     @OneToMany(mappedBy = "financialProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ExpenseItem> expenses = new ArrayList<>();
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @Column(name = "current_balance", nullable = false)
-    private BigDecimal currentBalance = BigDecimal.ZERO;
-
-    @Column(name = "payday_day", nullable = false)
-    private Integer paydayDay = 1; // 1..28 recommended
-
-    @Column(name = "last_salary_applied")
-    private LocalDate lastSalaryApplied;
-
-
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+    public Long getId() {
+        return id;
     }
 
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public BigDecimal getMonthlyIncome() {
+        return monthlyIncome;
+    }
+
+    public void setMonthlyIncome(BigDecimal monthlyIncome) {
+        this.monthlyIncome = monthlyIncome;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public BigDecimal getCurrentBalance() {
+        return currentBalance;
+    }
+
+    public void setCurrentBalance(BigDecimal currentBalance) {
+        this.currentBalance = currentBalance;
+    }
+
+    public Integer getPaydayDay() {
+        return paydayDay;
+    }
+
+    public void setPaydayDay(Integer paydayDay) {
+        this.paydayDay = paydayDay;
+    }
+
+    public LocalDate getLastSalaryApplied() {
+        return lastSalaryApplied;
+    }
+
+    public void setLastSalaryApplied(LocalDate lastSalaryApplied) {
+        this.lastSalaryApplied = lastSalaryApplied;
+    }
+
+    public Boolean getBalanceLocked() {
+        return balanceLocked;
+    }
+
+    public void setBalanceLocked(Boolean balanceLocked) {
+        this.balanceLocked = balanceLocked;
+    }
+
+    public Boolean getSalaryPendingConfirmation() {
+        return salaryPendingConfirmation;
+    }
+
+    public void setSalaryPendingConfirmation(Boolean salaryPendingConfirmation) {
+        this.salaryPendingConfirmation = salaryPendingConfirmation;
+    }
+
+    public LocalDate getLastSalaryDismissedDate() {
+        return lastSalaryDismissedDate;
+    }
+
+    public void setLastSalaryDismissedDate(LocalDate lastSalaryDismissedDate) {
+        this.lastSalaryDismissedDate = lastSalaryDismissedDate;
+    }
+
+    public List<ExpenseItem> getExpenses() {
+        return expenses;
+    }
+
+    public void setExpenses(List<ExpenseItem> expenses) {
+        this.expenses = expenses;
     }
 }

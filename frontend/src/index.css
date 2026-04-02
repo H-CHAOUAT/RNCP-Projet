@@ -3,5 +3,20 @@
 @tailwind utilities;
 
 body {
-  @apply bg-cream text-dark;
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: #FDF6F7;
+  color: #2B1B1E;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
+
+a {
+  font-weight: 500;
+  color: #6B2737;
+  text-decoration: inherit;
+}
+a:hover { color: #4A1A25; }
+
+button { cursor: pointer; }
