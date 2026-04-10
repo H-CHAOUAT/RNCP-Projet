@@ -18,7 +18,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/bills")
-@CrossOrigin(origins = "*")
 public class BillController {
 
     private final BillRepository             billRepo;
@@ -66,7 +65,6 @@ public class BillController {
         if (user.getFamilyGroup() != null) bill.setFamilyGroup(user.getFamilyGroup());
         Bill saved = billRepo.save(bill);
 
-        // Only deduct balance + create transaction if bill is ALREADY PAID when added
         if (paid && amount.compareTo(BigDecimal.ZERO) > 0) {
             deductAndRecord(user, userId, amount, title, dueDate);
         }
@@ -74,11 +72,6 @@ public class BillController {
         return toMap(saved);
     }
 
-    /**
-     * PATCH /{id}/paid
-     * When marking paid=true  → deduct balance + create EXPENSE transaction
-     * When marking paid=false → refund balance + create REFUND transaction
-     */
     @PatchMapping("/{id}/paid")
     public Map<String, Object> togglePaid(@PathVariable Long id,
                                           @RequestBody Map<String, Object> body) {
@@ -94,28 +87,29 @@ public class BillController {
 
         BigDecimal amount = bill.getAmount() != null ? bill.getAmount() : BigDecimal.ZERO;
 
+        User billUser = bill.getUser();
+        if (billUser == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Bill has no associated user");
+        }
+
         if (!wasPaid && nowPaid && amount.compareTo(BigDecimal.ZERO) > 0) {
-            // Marking as PAID → deduct balance + record expense
-            deductAndRecord(bill.getUser(), bill.getUser().getUserId(),
+            deductAndRecord(billUser, billUser.getUserId(),
                     amount, bill.getTitle(), bill.getDueDate());
         } else if (wasPaid && !nowPaid && amount.compareTo(BigDecimal.ZERO) > 0) {
-            // Marking as UNPAID → refund balance + record reversal
-            try {
-                fpRepo.findByUser_UserId(bill.getUser().getUserId()).ifPresent(fp -> {
-                    BigDecimal bal = fp.getCurrentBalance() != null
-                            ? fp.getCurrentBalance() : BigDecimal.ZERO;
-                    fp.setCurrentBalance(bal.add(amount));
-                    fpRepo.save(fp);
-                });
-                Transaction tx = new Transaction();
-                tx.setUser(bill.getUser());
-                tx.setType("INCOME");
-                tx.setCategory("BILL_REVERSAL");
-                tx.setAmount(amount);
-                tx.setDescription("Bill reversed: " + bill.getTitle());
-                tx.setDate(LocalDate.now());
-                txRepo.save(tx);
-            } catch (Exception ignored) {}
+            fpRepo.findByUser_UserId(billUser.getUserId()).ifPresent(fp -> {
+                BigDecimal bal = fp.getCurrentBalance() != null
+                        ? fp.getCurrentBalance() : BigDecimal.ZERO;
+                fp.setCurrentBalance(bal.add(amount));
+                fpRepo.save(fp);
+            });
+            Transaction tx = new Transaction();
+            tx.setUser(billUser);
+            tx.setType("INCOME");
+            tx.setCategory("BILL_REVERSAL");
+            tx.setAmount(amount);
+            tx.setDescription("Bill reversed: " + bill.getTitle());
+            tx.setDate(LocalDate.now());
+            txRepo.save(tx);
         }
 
         return toMap(saved);
@@ -123,25 +117,21 @@ public class BillController {
 
     private void deductAndRecord(User user, Long userId,
                                  BigDecimal amount, String title, LocalDate dueDate) {
-        try {
-            Transaction tx = new Transaction();
-            tx.setUser(user);
-            tx.setType("EXPENSE");
-            tx.setCategory("BILLS");
-            tx.setAmount(amount);
-            tx.setDescription("Bill paid: " + title);
-            tx.setDate(dueDate != null ? dueDate : LocalDate.now());
-            txRepo.save(tx);
-        } catch (Exception ignored) {}
+        Transaction tx = new Transaction();
+        tx.setUser(user);
+        tx.setType("EXPENSE");
+        tx.setCategory("BILLS");
+        tx.setAmount(amount);
+        tx.setDescription("Bill paid: " + title);
+        tx.setDate(dueDate != null ? dueDate : LocalDate.now());
+        txRepo.save(tx);
 
-        try {
-            fpRepo.findByUser_UserId(userId).ifPresent(fp -> {
-                BigDecimal bal = fp.getCurrentBalance() != null
-                        ? fp.getCurrentBalance() : BigDecimal.ZERO;
-                fp.setCurrentBalance(bal.subtract(amount));
-                fpRepo.save(fp);
-            });
-        } catch (Exception ignored) {}
+        fpRepo.findByUser_UserId(userId).ifPresent(fp -> {
+            BigDecimal bal = fp.getCurrentBalance() != null
+                    ? fp.getCurrentBalance() : BigDecimal.ZERO;
+            fp.setCurrentBalance(bal.subtract(amount));
+            fpRepo.save(fp);
+        });
     }
 
     private Map<String, Object> toMap(Bill b) {

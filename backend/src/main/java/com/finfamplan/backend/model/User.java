@@ -39,8 +39,7 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private Role role;
 
-    // FIX: map the family_group_id FK that already exists in the DB
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "family_group_id")
     private FamilyGroup familyGroup;
 

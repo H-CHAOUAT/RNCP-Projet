@@ -14,7 +14,6 @@ export default function PreferencesTab() {
         timezone: detectedTimezone,
     });
 
-    // Load saved prefs (if any)
     useEffect(() => {
         const saved = localStorage.getItem("preferences");
         if (saved) {
@@ -26,7 +25,6 @@ export default function PreferencesTab() {
                     timezone: parsed.timezone || detectedTimezone,
                 }));
             } catch {
-                // ignore corrupted localStorage
             }
         }
     }, [detectedTimezone]);

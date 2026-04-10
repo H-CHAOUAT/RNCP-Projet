@@ -37,12 +37,22 @@ public class Bill {
     private FamilyGroup familyGroup;
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private LocalDateTime updatedAt;
 
-    // Getters & setters
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
     public Long getId() { return id; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -51,7 +61,7 @@ public class Bill {
     public LocalDate getDueDate() { return dueDate; }
     public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
     public Boolean getPaid() { return paid; }
-    public void setPaid(Boolean paid) { this.paid = paid; this.updatedAt = LocalDateTime.now(); }
+    public void setPaid(Boolean paid) { this.paid = paid; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
     public User getUser() { return user; }

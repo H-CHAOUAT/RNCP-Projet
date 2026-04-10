@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "../components/atoms/Button";
 import CreateGoalModal from "../components/organisms/goals/CreateGoalModal";
 import GoalsList from "../components/organisms/goals/GoalsList";
+import { apiFetch } from "../api/apiFetch";
 
 export default function GoalsPage() {
     const [open, setOpen] = useState(false);
@@ -22,20 +23,16 @@ export default function GoalsPage() {
     const loadGoals = async () => {
         if (!userId) { setLoading(false); return; }
         try {
-            const res = await fetch(`http://localhost:8080/api/goals/user/${userId}`);
+            const res = await apiFetch(`/api/goals/user/${userId}`);
             if (!res.ok) throw new Error(await res.text());
             setGoals(await res.json());
-        } catch (e) {
-            console.error(e);
-        } finally {
+        } catch {} finally {
             setLoading(false);
         }
     };
 
     useEffect(() => { loadGoals(); }, [userId]);
 
-    // FIX: onCreate receives the already-created goal object from the modal.
-    // We just append it to state — no second API call needed.
     const handleCreated = (newGoal) => {
         setGoals((prev) => [...prev, newGoal]);
         setOpen(false);

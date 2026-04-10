@@ -35,7 +35,6 @@ public class FinancialProfileController {
         FinancialProfile profile = financialRepo.findByUser_UserId(userId)
                 .orElseGet(() -> createDefault(userId));
 
-        // Check if payday has arrived and salary is not yet confirmed
         checkPaydayPending(profile);
         if (Boolean.TRUE.equals(profile.getSalaryPendingConfirmation())) {
             financialRepo.save(profile);
@@ -55,12 +54,10 @@ public class FinancialProfileController {
         profile.setMonthlyIncome(dto.monthlyIncome != null ? dto.monthlyIncome : BigDecimal.ZERO);
         profile.setCurrency(dto.currency != null ? dto.currency : "EUR");
 
-        // Only update balance if NOT locked yet
         if (!Boolean.TRUE.equals(profile.getBalanceLocked()) && dto.currentBalance != null) {
             profile.setCurrentBalance(dto.currentBalance);
         }
 
-        // Lock balance if dto requests it
         if (Boolean.TRUE.equals(dto.balanceLocked)) {
             profile.setBalanceLocked(true);
         }

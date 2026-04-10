@@ -23,12 +23,9 @@ export default function LoginForm() {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                // FIX: store data.user (has id, firstName, lastName, role)
-                // The backend wraps user info inside { success, message, user: {...} }
+                sessionStorage.setItem("token", data.token);
                 localStorage.setItem("user", JSON.stringify(data.user));
 
-                // First-time login → welcome page; returning user → dashboard
-                // We use a flag in localStorage to track this
                 const hasSeenWelcome = localStorage.getItem(`welcome_seen_${data.user.id}`);
                 if (!hasSeenWelcome) {
                     localStorage.setItem(`welcome_seen_${data.user.id}`, "1");
@@ -37,10 +34,10 @@ export default function LoginForm() {
                     navigate("/dashboard");
                 }
             } else {
-                setError("❌ " + (data.message || "Invalid email or password."));
+                setError(data.message || "Invalid email or password.");
             }
         } catch {
-            setError("❌ Cannot reach server. Please try again.");
+            setError("Cannot reach server. Please try again.");
         } finally {
             setLoading(false);
         }

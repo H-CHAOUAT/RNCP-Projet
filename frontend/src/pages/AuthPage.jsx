@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import LoginForm from "../components/organisms/LoginForm";
 import Signup from "../components/organisms/SignupForm";
 import AuthCard from "../components/molecules/AuthCard";
 import Logo from "../components/atoms/Logo";
 
 export default function AuthPage() {
-    const [isLogin, setIsLogin] = useState(true);
+    const location = useLocation();
+    const navigate = useNavigate();
+    const isLogin = location.pathname !== "/signup";
 
     return (
         <div className="min-h-screen flex">
-            {/* Left panel — brand */}
             <div className="hidden md:flex w-2/5 bg-wine flex-col items-center justify-center p-12 text-white">
                 <div className="mb-6">
                     <Logo size="xl" variant="light" />
@@ -44,10 +45,8 @@ export default function AuthPage() {
                 </div>
             </div>
 
-            {/* Right panel — form */}
             <div className="flex-1 flex items-center justify-center bg-cream p-6">
                 <div className="w-full max-w-md">
-                    {/* Mobile brand */}
                     <div className="md:hidden text-center mb-8">
                         <div className="flex justify-center mb-3">
                             <Logo size="lg" variant="dark" />
@@ -61,7 +60,7 @@ export default function AuthPage() {
                             {isLogin ? (
                                 <>
                                     Don't have an account?{" "}
-                                    <button onClick={() => setIsLogin(false)}
+                                    <button onClick={() => navigate("/signup")}
                                             className="text-wine font-medium hover:text-wineDark hover:underline bg-transparent border-none p-0">
                                         Sign up
                                     </button>
@@ -69,7 +68,7 @@ export default function AuthPage() {
                             ) : (
                                 <>
                                     Already have an account?{" "}
-                                    <button onClick={() => setIsLogin(true)}
+                                    <button onClick={() => navigate("/login")}
                                             className="text-wine font-medium hover:text-wineDark hover:underline bg-transparent border-none p-0">
                                         Sign in
                                     </button>

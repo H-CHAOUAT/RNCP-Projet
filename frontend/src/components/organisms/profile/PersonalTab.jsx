@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import FormField from "../../molecules/FormField";
 import Input from "../../atoms/Input";
 import Button from "../../atoms/Button";
+import { apiFetch } from "../../../api/apiFetch";
 
 export default function PersonalTab() {
     const [profile, setProfile] = useState({
@@ -16,7 +17,6 @@ export default function PersonalTab() {
 
     useEffect(() => {
         loadUserProfile();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const getUserIdFromLocalStorage = () => {
@@ -24,7 +24,7 @@ export default function PersonalTab() {
             const savedUser = localStorage.getItem("user");
             if (!savedUser) return null;
             const user = JSON.parse(savedUser);
-            return user.id ?? user.userId ?? null; // ✅ support both
+            return user.id ?? user.userId ?? null;
         } catch {
             return null;
         }
@@ -39,7 +39,7 @@ export default function PersonalTab() {
                 return;
             }
 
-            const response = await fetch(`/api/users/${userId}`, {
+            const response = await apiFetch(`/api/users/${userId}`, {
                 headers: { "Content-Type": "application/json" },
             });
 
@@ -53,8 +53,7 @@ export default function PersonalTab() {
             } else {
                 setMessage({ type: "error", text: "Failed to load profile data." });
             }
-        } catch (error) {
-            console.error("Error loading profile:", error);
+        } catch {
             setMessage({ type: "error", text: "Error loading profile. Please try again." });
         } finally {
             setLoading(false);
@@ -78,7 +77,7 @@ export default function PersonalTab() {
                 return;
             }
 
-            const response = await fetch(`/api/users/${userId}`, {
+            const response = await apiFetch(`/api/users/${userId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(profile),
@@ -87,7 +86,6 @@ export default function PersonalTab() {
             if (response.ok) {
                 const updatedUser = await response.json();
 
-                // keep local storage user in sync
                 try {
                     const savedUser = JSON.parse(localStorage.getItem("user") || "{}");
                     const updatedLocalUser = {
@@ -95,21 +93,18 @@ export default function PersonalTab() {
                         firstName: updatedUser.firstName,
                         lastName: updatedUser.lastName,
                         email: updatedUser.email,
-                        id: savedUser.id ?? updatedUser.userId ?? savedUser.userId, // keep compatibility
+                        id: savedUser.id ?? updatedUser.userId ?? savedUser.userId,
                         userId: savedUser.userId ?? updatedUser.userId,
                     };
                     localStorage.setItem("user", JSON.stringify(updatedLocalUser));
-                } catch {
-                    // ignore
-                }
+                } catch {}
 
-                setMessage({ type: "success", text: "✅ Profile updated successfully!" });
+                setMessage({ type: "success", text: "Profile updated successfully!" });
             } else {
                 const errorText = await response.text();
                 setMessage({ type: "error", text: `Failed to update profile: ${errorText}` });
             }
-        } catch (error) {
-            console.error("Error updating profile:", error);
+        } catch {
             setMessage({ type: "error", text: "Error updating profile. Please try again." });
         } finally {
             setSaving(false);

@@ -25,7 +25,6 @@ public class AuthService {
         if (userRepository.existsByEmail(req.getEmail())) {
             throw new IllegalArgumentException("Email already registered");
         }
-        // ✅ convert String to Role enum safely
         Role role = toRole(req.getRole());
 
         User u = new User();
@@ -57,7 +56,6 @@ public class AuthService {
                     .message("Bad credentials")
                     .build();
         }
-        // ✅ generate JWT
         String token = jwtService.generateToken(u);
 
         return AuthResponse.builder()
@@ -68,7 +66,6 @@ public class AuthService {
                 .expiresIn(900) // 15 minutes (match JwtService)
                 .build();
     }
-    // helper: String -> Role enum
     private Role toRole(String raw) {
         try {
             return Role.valueOf(raw.trim().toUpperCase());

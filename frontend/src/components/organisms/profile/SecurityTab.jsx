@@ -2,17 +2,16 @@ import { useState } from "react";
 import Button from "../../atoms/Button";
 import Input from "../../atoms/Input";
 import FormField from "../../molecules/FormField";
+import { apiFetch } from "../../../api/apiFetch";
 
 export default function SecurityTab() {
     const lastLogin = localStorage.getItem("lastLogin") || new Date().toLocaleString();
 
-    // Change password state
     const [showPasswordForm, setShowPasswordForm] = useState(false);
     const [passwords, setPasswords] = useState({ current: "", newPass: "", confirm: "" });
     const [pwSaving, setPwSaving] = useState(false);
     const [pwMessage, setPwMessage] = useState({ type: "", text: "" });
 
-    // Sessions state
     const [sessionLoading, setSessionLoading] = useState(false);
     const [sessionMessage, setSessionMessage] = useState({ type: "", text: "" });
 
@@ -34,7 +33,7 @@ export default function SecurityTab() {
 
         setPwSaving(true);
         try {
-            const res = await fetch(`http://localhost:8080/api/users/${userId}/password`, {
+            const res = await apiFetch(`/api/users/${userId}/password`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -44,16 +43,15 @@ export default function SecurityTab() {
             });
 
             if (res.ok) {
-                setPwMessage({ type: "success", text: "✅ Password changed successfully!" });
+                setPwMessage({ type: "success", text: "Password changed successfully!" });
                 setPasswords({ current: "", newPass: "", confirm: "" });
                 setShowPasswordForm(false);
             } else {
                 const text = await res.text();
-                setPwMessage({ type: "error", text: `❌ ${text || "Failed to change password."}` });
+                setPwMessage({ type: "error", text: text || "Failed to change password." });
             }
-        } catch (e) {
-            console.error(e);
-            setPwMessage({ type: "error", text: "❌ Network error. Please try again." });
+        } catch {
+            setPwMessage({ type: "error", text: "Network error. Please try again." });
         } finally {
             setPwSaving(false);
         }
@@ -66,19 +64,19 @@ export default function SecurityTab() {
         setSessionLoading(true);
         setSessionMessage({ type: "", text: "" });
         try {
-            const res = await fetch(`http://localhost:8080/api/users/${userId}/logout-all`, {
+            const res = await apiFetch(`/api/users/${userId}/logout-all`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
             });
 
             if (res.ok) {
-                setSessionMessage({ type: "success", text: "✅ All other sessions have been terminated." });
+                setSessionMessage({ type: "success", text: "All other sessions have been terminated." });
+                sessionStorage.removeItem("token");
             } else {
-                setSessionMessage({ type: "error", text: "❌ Failed to terminate sessions." });
+                setSessionMessage({ type: "error", text: "Failed to terminate sessions." });
             }
-        } catch (e) {
-            console.error(e);
-            setSessionMessage({ type: "error", text: "❌ Network error." });
+        } catch {
+            setSessionMessage({ type: "error", text: "Network error." });
         } finally {
             setSessionLoading(false);
         }
@@ -90,7 +88,6 @@ export default function SecurityTab() {
             <p className="mt-1 text-sm text-gray-600">Manage your account security.</p>
 
             <div className="mt-6 space-y-6">
-                {/* Last login */}
                 <div className="flex items-center justify-between">
                     <div>
                         <p className="font-medium text-slate-800">Last login</p>
@@ -100,7 +97,6 @@ export default function SecurityTab() {
 
                 <hr />
 
-                {/* Change password */}
                 <div>
                     <div className="flex items-center justify-between">
                         <div>
@@ -137,7 +133,6 @@ export default function SecurityTab() {
 
                 <hr />
 
-                {/* Active sessions */}
                 <div>
                     <div className="flex items-center justify-between">
                         <div>

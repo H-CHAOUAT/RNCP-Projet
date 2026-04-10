@@ -3,6 +3,7 @@ import FormField from "../../molecules/FormField";
 import Input from "../../atoms/Input";
 import Select from "../../atoms/Select";
 import Button from "../../atoms/Button";
+import { apiFetch } from "../../../api/apiFetch";
 
 const PRESET_CATEGORIES = ["RENT", "BILLS", "SUBSCRIPTIONS", "GROCERIES", "TRANSPORT", "SAVINGS"];
 
@@ -49,9 +50,7 @@ export default function FinancialForm() {
     const [paydayDay, setPaydayDay] = useState("1");
     const [lastSalaryApplied, setLastSalaryApplied] = useState(null);
 
-    const [balanceLocked, setBalanceLocked] = useState(false);
-    const [showLockConfirm, setShowLockConfirm] = useState(false);
-    const [pendingPayload, setPendingPayload] = useState(null);
+    const [balanceLocked] = useState(false);
 
     const [expenses, setExpenses] = useState([
         { category: "RENT", amount: "0", custom: false, customLabel: "" },
@@ -94,7 +93,7 @@ export default function FinancialForm() {
         }
 
         try {
-            const res = await fetch(`/api/financial/${userId}`);
+            const res = await apiFetch(`/api/financial/${userId}`);
             if (res.ok) {
                 applyData(await res.json());
             } else {
@@ -162,7 +161,7 @@ export default function FinancialForm() {
         const prevIncome = Number(prevIncomeRef.current || 0);
 
         try {
-            const res = await fetch(`/api/financial/${userId}`, {
+            const res = await apiFetch(`/api/financial/${userId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload),
@@ -177,7 +176,7 @@ export default function FinancialForm() {
             applyData(updated);
 
             if (newIncome > 0 && newIncome !== prevIncome) {
-                await fetch(`/api/transactions/user/${userId}`, {
+                await apiFetch(`/api/transactions/user/${userId}`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -203,27 +202,7 @@ export default function FinancialForm() {
             setMessage({ type: "error", text: "No user session." });
             return;
         }
-
-        if (!balanceLocked && Number(currentBalance || 0) > 0) {
-            setPendingPayload(buildPayload());
-            setShowLockConfirm(true);
-            return;
-        }
-
         await doSave(buildPayload());
-    };
-
-    const handleLockConfirm = async () => {
-        setShowLockConfirm(false);
-        if (!pendingPayload) return;
-
-        await doSave({ ...pendingPayload, balanceLocked: true });
-        setPendingPayload(null);
-    };
-
-    const handleLockCancel = () => {
-        setShowLockConfirm(false);
-        setPendingPayload(null);
     };
 
     if (loading) {
@@ -266,26 +245,13 @@ export default function FinancialForm() {
                         </Select>
                     </FormField>
 
-                    <FormField label="Initial balance">
-                        <div className="space-y-1">
-                            <Input
-                                type="number"
-                                value={currentBalance}
-                                disabled={balanceLocked}
-                                onChange={(e) => setCurrentBalance(e.target.value)}
-                                placeholder="0"
-                            />
-                            {balanceLocked && (
-                                <p className="text-xs text-dark/50">
-                                    🔒 This initial balance has been locked and cannot be changed.
-                                </p>
-                            )}
-                            {!balanceLocked && (
-                                <p className="text-xs text-amber-700">
-                                    This amount can only be entered once. After confirmation, it will be locked.
-                                </p>
-                            )}
-                        </div>
+                    <FormField label="Current balance">
+                        <Input
+                            type="number"
+                            value={currentBalance}
+                            onChange={(e) => setCurrentBalance(e.target.value)}
+                            placeholder="0"
+                        />
                     </FormField>
 
                     <FormField label="Payday day (1–28)">
@@ -416,38 +382,6 @@ export default function FinancialForm() {
                 </Button>
             </div>
 
-            {showLockConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-                        <h3 className="text-xl font-semibold text-dark">
-                            Confirm initial balance
-                        </h3>
-                        <p className="mt-3 text-sm text-dark/60">
-                            Your initial balance of{" "}
-                            <strong>{Number(currentBalance || 0).toLocaleString("fr-FR")} {currency}</strong>{" "}
-                            will be locked and cannot be changed later.
-                        </p>
-                        <p className="mt-2 text-sm text-dark/60">
-                            Are you sure you want to continue?
-                        </p>
-
-                        <div className="mt-6 flex gap-3">
-                            <button
-                                onClick={handleLockCancel}
-                                className="flex-1 rounded-lg border border-slate-300 py-3 font-semibold text-dark transition hover:bg-slate-50"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleLockConfirm}
-                                className="flex-1 rounded-lg bg-wine py-3 font-semibold text-white transition hover:bg-wineDark"
-                            >
-                                Yes, confirm
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </>
     );
 }
