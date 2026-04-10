@@ -13,7 +13,7 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: 'http://finfam-backend:8080',
+        target: 'http://localhost:8080',
         changeOrigin: true,
       },
     },
