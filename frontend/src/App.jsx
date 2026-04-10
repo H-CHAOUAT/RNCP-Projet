@@ -15,18 +15,15 @@ import BillsPage from "./pages/BillsPage.jsx";
 import FamilyPage from "./pages/FamilyPage.jsx";
 import "./App.css";
 
-
 function migrateLocalStorage() {
     try {
         const raw = localStorage.getItem("user");
         if (!raw) return;
         const parsed = JSON.parse(raw);
-        // If it has a nested "user" key, it's the old format — unwrap it
         if (parsed?.user && typeof parsed.user === "object" && parsed.user.id) {
             localStorage.setItem("user", JSON.stringify(parsed.user));
         }
     } catch {
-        // Corrupted — remove it so user is asked to log in again
         localStorage.removeItem("user");
     }
 }
@@ -36,13 +33,11 @@ export default function App() {
     return (
         <Router>
             <Routes>
-                {/* Public */}
                 <Route path="/" element={<AuthPage />} />
                 <Route path="/login" element={<AuthPage />} />
                 <Route path="/signup" element={<AuthPage />} />
                 <Route path="/welcome" element={<WelcomePage />} />
 
-                {/* Protected — inside AppLayout */}
                 <Route element={<AppLayout />}>
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/financial" element={<FinancialPage />} />

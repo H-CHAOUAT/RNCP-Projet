@@ -17,7 +17,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/goals")
-@CrossOrigin(origins = "http://localhost:3000")
 public class GoalController {
 
     private final GoalRepository goalRepo;
@@ -45,6 +44,14 @@ public class GoalController {
                 .toList();
     }
 
+    @GetMapping("/family/{familyGroupId}")
+    public List<GoalViewDto> listByFamily(@PathVariable Long familyGroupId) {
+        return goalRepo.findByUser_FamilyGroup_Id(familyGroupId)
+                .stream()
+                .map(this::toViewDto)
+                .toList();
+    }
+
     @PostMapping("/user/{userId}")
     public GoalViewDto create(@PathVariable Long userId, @RequestBody @Valid CreateGoalRequest req) {
         User user = userRepo.findById(userId)
@@ -60,7 +67,6 @@ public class GoalController {
         g.setTargetAmount(req.targetAmount);
         g.setCurrentAmount(BigDecimal.ZERO);
 
-        // creator
         g.setCreatedBy(user);
 
         Goal saved = goalRepo.save(g);

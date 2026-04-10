@@ -1,16 +1,26 @@
 import { useEffect, useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "../components/organisms/Sidebar";
 import Topbar from "../components/organisms/Topbar";
 
 export default function AppLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        const token = sessionStorage.getItem("token");
+        if (!token) {
+            navigate("/login", { replace: true });
+        }
+    }, [navigate]);
 
     useEffect(() => {
         const onKeyDown = (e) => { if (e.key === "Escape") setIsSidebarOpen(false); };
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
     }, []);
+
+    if (!sessionStorage.getItem("token")) return null;
 
     return (
         <div className="min-h-screen bg-cream">

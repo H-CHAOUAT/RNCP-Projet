@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import Button from "../../atoms/Button";
 import DateInput from "../../atoms/DateInput";
+import { apiFetch } from "../../../api/apiFetch";
 
 const SUGGESTIONS = [
     "Vacation", "Family Trip", "Emergency fund", "New car",
@@ -20,17 +21,16 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
     const [description,  setDescription]  = useState("");
     const [targetAmount, setTargetAmount] = useState("");
     const [deadline,     setDeadline]     = useState("");
-    const [saving,       setSaving]       = useState(false);
-    const [error,        setError]        = useState("");
-    const [analysis,     setAnalysis]     = useState(null);
+    const [saving,        setSaving]       = useState(false);
+    const [error,         setError]        = useState("");
+    const [analysis,      setAnalysis]     = useState(null);
+    const [selectedPlan,  setSelectedPlan] = useState(null);
 
-    // Reset when modal opens
     useEffect(() => {
         if (!open) return;
-        setTitle(""); setDescription(""); setTargetAmount(""); setDeadline(""); setError(""); setAnalysis(null);
+        setTitle(""); setDescription(""); setTargetAmount(""); setDeadline(""); setError(""); setAnalysis(null); setSelectedPlan(null);
     }, [open]);
 
-    // Recalculate savings preview
     useEffect(() => {
         if (!deadline || !targetAmount || Number(targetAmount) <= 0) { setAnalysis(null); return; }
         const months = Math.max(1, Math.round((new Date(deadline) - new Date()) / (1000 * 60 * 60 * 24 * 30)));
@@ -54,7 +54,7 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
 
         setSaving(true);
         try {
-            const res = await fetch(`/api/goals/user/${userId}`, {
+            const res = await apiFetch(`/api/goals/user/${userId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -79,7 +79,6 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-lg max-h-[90vh] overflow-y-auto">
 
-                {/* Header */}
                 <div className="flex items-start justify-between mb-5">
                     <div>
                         <h2 className="text-xl font-semibold text-slate-900">Create a goal</h2>
@@ -94,7 +93,6 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
 
                 <div className="space-y-4">
 
-                    {/* Suggestion chips */}
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-2">Quick suggestions</label>
                         <div className="flex flex-wrap gap-2">
@@ -112,7 +110,6 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                         </div>
                     </div>
 
-                    {/* Title */}
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Goal title *</label>
                         <input className={inputCls} value={title}
@@ -120,7 +117,6 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                                placeholder="e.g. Vacation in Spain (or type anything)" />
                     </div>
 
-                    {/* Description */}
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Description (optional)</label>
                         <input className={inputCls} value={description}
@@ -128,7 +124,6 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                                placeholder="e.g. Flights + hotel for 4" />
                     </div>
 
-                    {/* Amount + Deadline side by side */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Target amount (€) *</label>
@@ -145,12 +140,11 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                         </div>
                     </div>
 
-                    {/* Savings plan preview — left-aligned, cards are clickable to select plan */}
                     {analysis && (
                         <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 space-y-3">
                             <div className="text-sm font-semibold text-blue-800">💡 Savings plan preview</div>
                             <div className="text-xs text-blue-600">
-                                Based on your deadline ({analysis.months} month{analysis.months !== 1 ? "s" : ""} away):
+                                Based on your deadline ({analysis.months} month{analysis.months !== 1 ? "s" : ""} away) — click a plan to select it:
                             </div>
                             <div className="grid grid-cols-3 gap-2">
                                 {[
@@ -158,37 +152,32 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                                     { label: "On time ✓",  amount: analysis.onTime,     sub: "Hits deadline"        },
                                     { label: "Aggressive", amount: analysis.aggressive, sub: "1 month early"        },
                                 ].map(({ label, amount, sub }) => {
-                                    const isOnTime = label === "On time ✓";
-                                    // FIX: clicking a plan card fills the amount field
+                                    const isSelected = selectedPlan === label;
                                     return (
                                         <button
                                             key={label}
                                             type="button"
-                                            onClick={() => setTargetAmount(
-                                                // Reverse-calculate: amount × months = new target (round to nearest 10)
-                                                String(Math.ceil(Number(amount) * analysis.months / 10) * 10)
-                                            )}
-                                            title={`Set monthly target to €${amount}`}
-                                            className={`rounded-lg p-3 text-left transition border hover:scale-[1.02] ${
-                                                isOnTime
+                                            onClick={() => setSelectedPlan(isSelected ? null : label)}
+                                            className={`rounded-lg p-3 text-left border transition hover:scale-[1.02] ${
+                                                isSelected
                                                     ? "bg-wine text-white border-wine"
                                                     : "bg-white text-slate-800 border-blue-200 hover:border-wine"
                                             }`}
                                         >
-                                            {/* FIX: text-left, not text-center */}
-                                            <div className={`text-xs mb-1 ${isOnTime ? "text-red-100" : "text-slate-500"}`}>{label}</div>
+                                            <div className={`text-xs mb-1 ${isSelected ? "text-red-100" : "text-slate-500"}`}>{label}</div>
                                             <div className="text-base font-bold">€{amount}/mo</div>
-                                            <div className={`text-xs mt-1 ${isOnTime ? "text-red-200" : "text-slate-400"}`}>{sub}</div>
+                                            <div className={`text-xs mt-1 ${isSelected ? "text-red-200" : "text-slate-400"}`}>{sub}</div>
                                         </button>
                                     );
                                 })}
                             </div>
-                            <p className="text-xs text-blue-500">Click a plan to adjust your target amount.</p>
+                            {selectedPlan && (
+                                <p className="text-xs text-wine font-medium">✓ Plan selected: {selectedPlan}</p>
+                            )}
                         </div>
                     )}
                 </div>
 
-                {/* Actions */}
                 <div className="mt-6 flex gap-3">
                     <Button type="button" onClick={handleCreate} disabled={saving} className="flex-1">
                         {saving ? "Creating..." : "Create goal"}

@@ -32,7 +32,7 @@ export default function Signup() {
         setError("");
         if (!form.firstName.trim()) { setError("First name is required."); return; }
         if (!form.email.trim())     { setError("Email is required.");       return; }
-        if (form.password.length < 6) { setError("Password must be at least 6 characters."); return; }
+        if (form.password.length < 8) { setError("Password must be at least 8 characters."); return; }
 
         setLoading(true);
         try {
@@ -76,11 +76,10 @@ export default function Signup() {
             </div>
 
             <div>
-                <label className="text-xs font-medium text-slate-600 mb-1 block">Password * <span className="text-slate-400 font-normal">(min. 6 characters)</span></label>
+                <label className="text-xs font-medium text-slate-600 mb-1 block">Password * <span className="text-slate-400 font-normal">(min. 8 characters)</span></label>
                 <input type="password" className={inp} value={form.password} onChange={set("password")} placeholder="••••••••" required />
             </div>
 
-            {/* ── Role picker ─────────────────────────────────────────────── */}
             <div>
                 <label className="text-xs font-medium text-slate-600 mb-2 block">
                     Your role in the family *

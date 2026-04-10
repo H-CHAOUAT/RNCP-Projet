@@ -14,7 +14,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
 public class UserController {
 
     private final UserRepository userRepository;
@@ -55,7 +54,6 @@ public class UserController {
         }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
     }
 
-    // FIX: Change password endpoint
     @PutMapping("/{id}/password")
     public Map<String, String> changePassword(
             @PathVariable Long id,
@@ -85,20 +83,13 @@ public class UserController {
         return Map.of("message", "Password updated successfully");
     }
 
-    // FIX: Logout all sessions endpoint
-    // Since we're using stateless JWT, this endpoint just returns success.
-    // For full session invalidation, you would maintain a token blacklist.
     @PostMapping("/{id}/logout-all")
     public Map<String, String> logoutAll(@PathVariable Long id) {
         userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        // With JWT, tokens are stateless. A production implementation would
-        // store a "logout timestamp" and reject tokens issued before it.
-        // For now, this confirms the action to the frontend.
         return Map.of("message", "All sessions terminated. Please log in again on each device.");
     }
 
-    // Family invite: find user by email and add to family group
     @PostMapping("/family/invite")
     public Map<String, Object> inviteToFamily(@RequestBody Map<String, Object> body) {
         Long inviterUserId = Long.valueOf(body.get("inviterUserId").toString());

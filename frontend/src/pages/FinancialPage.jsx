@@ -3,8 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import FinancialForm from "../components/organisms/financial/FinancialForm";
 import GoalsList from "../components/organisms/goals/GoalsList";
 import CreateGoalModal from "../components/organisms/goals/CreateGoalModal";
+import { apiFetch } from "../api/apiFetch";
 
-// ─── Analysis tab ─────────────────────────────────────────────────────────────
 function AnalysisTab({ userId }) {
     const [financial, setFinancial] = useState(null);
     const [goals, setGoals] = useState([]);
@@ -18,8 +18,8 @@ function AnalysisTab({ userId }) {
         }
 
         Promise.all([
-            fetch(`/api/financial/${userId}`).then(r => (r.ok ? r.json() : null)),
-            fetch(`/api/goals/user/${userId}`).then(r => (r.ok ? r.json() : [])),
+            apiFetch(`/api/financial/${userId}`).then(r => (r.ok ? r.json() : null)),
+            apiFetch(`/api/goals/user/${userId}`).then(r => (r.ok ? r.json() : [])),
         ])
             .then(([fin, g]) => {
                 setFinancial(fin);
@@ -276,7 +276,6 @@ function AnalysisTab({ userId }) {
     );
 }
 
-// ─── Goals tab ────────────────────────────────────────────────────────────────
 function GoalsTab({ userId, openModalImmediately }) {
     const [goals, setGoals] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -288,7 +287,7 @@ function GoalsTab({ userId, openModalImmediately }) {
             return;
         }
 
-        fetch(`/api/goals/user/${userId}`)
+        apiFetch(`/api/goals/user/${userId}`)
             .then(r => (r.ok ? r.json() : []))
             .then(setGoals)
             .catch(console.error)
@@ -333,7 +332,6 @@ function GoalsTab({ userId, openModalImmediately }) {
     );
 }
 
-// ─── Main ─────────────────────────────────────────────────────────────────────
 const TABS = ["Overview", "Goals", "Expenses", "Analysis"];
 
 export default function FinancialPage() {

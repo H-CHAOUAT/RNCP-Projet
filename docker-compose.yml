@@ -33,14 +33,17 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       SPRING_PROFILES_ACTIVE: prod
+      JWT_SECRET: ${JWT_SECRET:-RmluRmFtUGxhbkp3dFNlY3JldEtleUZvckRldmVsb3BtZW50T25seVJlcGxhY2VJblByb2R1Y3Rpb24=}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:80}
+    volumes:
+      - maven-cache:/root/.m2
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      # FIX: pass backend URL at build time so Vite embeds it
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+        VITE_API_URL: ${VITE_API_URL:-}
     container_name: finfam-frontend
     restart: unless-stopped
     ports:
@@ -50,3 +53,4 @@ services:
 
 volumes:
   pgdata:
+  maven-cache:

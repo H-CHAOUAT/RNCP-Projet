@@ -5,19 +5,17 @@ import com.finfamplan.backend.dto.RegisterRequest;
 import com.finfamplan.backend.model.Role;
 import com.finfamplan.backend.model.User;
 import com.finfamplan.backend.repository.UserRepository;
+import com.finfamplan.backend.service.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-
 import java.util.HashMap;
 import java.util.Map;
 
-
 @RestController
 @RequestMapping("/api/auth")
-@CrossOrigin(origins = "http://localhost:3000") // allow frontend
 public class AuthController {
 
     @Autowired
@@ -26,8 +24,15 @@ public class AuthController {
     @Autowired
     private PasswordEncoder encoder;
 
+    @Autowired
+    private JwtService jwtService;
+
     @PostMapping("/register")
     public Map<String, Object> register(@RequestBody RegisterRequest request) {
+        if (request.getPassword() == null || request.getPassword().length() < 8) {
+            return Map.of("success", false, "message", "Password must be at least 8 characters");
+        }
+
         if (userRepository.existsByEmail(request.getEmail())) {
             return Map.of("success", false, "message", "Email already exists");
         }
@@ -35,7 +40,7 @@ public class AuthController {
         User u = new User();
         u.setFirstName(request.getFirstName());
         u.setLastName(request.getLastName());
-        u.setEmail(request.getEmail());
+        u.setEmail(request.getEmail().trim().toLowerCase());
         u.setPassword(encoder.encode(request.getPassword()));
         u.setRole(Role.valueOf(request.getRole().toUpperCase()));
         userRepository.save(u);
@@ -45,9 +50,10 @@ public class AuthController {
 
     @PostMapping("/login")
     public Map<String, Object> login(@RequestBody @Valid LoginRequest request) {
-        return userRepository.findByEmail(request.getEmail())
+        return userRepository.findByEmail(request.getEmail().trim().toLowerCase())
                 .map(user -> {
                     if (encoder.matches(request.getPassword(), user.getPassword())) {
+                        String token = jwtService.generateToken(user);
 
                         Map<String, Object> userMap = new HashMap<>();
                         userMap.put("id", user.getUserId());
@@ -59,14 +65,14 @@ public class AuthController {
                         Map<String, Object> response = new HashMap<>();
                         response.put("success", true);
                         response.put("message", "Login successful");
+                        response.put("token", token);
                         response.put("user", userMap);
 
                         return response;
-                    }else {
-                        return Map.<String, Object>of("success", false, "message", "Invalid password");
+                    } else {
+                        return Map.<String, Object>of("success", false, "message", "Invalid credentials");
                     }
                 })
-                .orElse(Map.<String, Object>of("success", false, "message", "User not found"));
+                .orElse(Map.<String, Object>of("success", false, "message", "Invalid credentials"));
     }
-
 }

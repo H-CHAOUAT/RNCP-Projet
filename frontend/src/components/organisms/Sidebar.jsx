@@ -2,6 +2,7 @@ import { useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import Logo from "../atoms/Logo";
 import CreateBillModal from "./bills/CreateBillModal";
+import CreateGoalModal from "./goals/CreateGoalModal";
 
 const base      = "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition";
 const inactive  = "text-dark/70 hover:bg-winePale hover:text-wine";
@@ -15,6 +16,7 @@ export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [billOpen, setBillOpen] = useState(false);
+  const [goalOpen, setGoalOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -49,7 +51,7 @@ export default function Sidebar({ open, onClose }) {
 
           <div className="flex h-full flex-col p-4 overflow-y-auto">
 
-            {/* Brand */}
+            
             <div className="mb-6 flex items-center justify-between">
               <button onClick={() => { navigate("/dashboard"); onClose?.(); }}
                       className="flex items-center gap-2 hover:opacity-80">
@@ -60,7 +62,7 @@ export default function Sidebar({ open, onClose }) {
                       onClick={onClose} aria-label="Close sidebar">✕</button>
             </div>
 
-            {/* Navigation */}
+            
             <nav className="space-y-1 flex-1">
               <NavLink to="/dashboard" className={linkClass} onClick={onClose}>
                 <span>🏠</span> Dashboard
@@ -96,25 +98,25 @@ export default function Sidebar({ open, onClose }) {
               </NavLink>
             </nav>
 
-            {/* Quick Actions */}
+            
             <div className="mt-4 rounded-xl border border-winePale bg-winePale/50 p-3">
               <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-wine/70">
                 Quick actions
               </div>
               <div className="space-y-1">
-                {/* FIX: opens modal instead of navigating to bills page */}
+                
                 <button className={`${base} w-full text-left ${inactive}`}
                         onClick={() => setBillOpen(true)}>
                   🧾 Add bill
                 </button>
                 <button className={`${base} w-full text-left ${inactive}`}
-                        onClick={() => goToTab("Goals")}>
+                        onClick={() => setGoalOpen(true)}>
                   🎯 Add goal
                 </button>
               </div>
             </div>
 
-            {/* Bottom */}
+            
             <div className="mt-4 border-t border-winePale pt-4 space-y-1">
               <NavLink to="/settings/personal" className={linkClass} onClick={onClose}>
                 <span>⚙️</span> Settings
@@ -127,11 +129,16 @@ export default function Sidebar({ open, onClose }) {
           </div>
         </aside>
 
-        {/* Bill modal — renders outside sidebar so it's not clipped */}
+        
         <CreateBillModal
             open={billOpen}
             onClose={() => setBillOpen(false)}
-            onCreated={() => setBillOpen(false)}
+            onCreated={() => { setBillOpen(false); navigate("/bills"); }}
+        />
+        <CreateGoalModal
+            open={goalOpen}
+            onClose={() => setGoalOpen(false)}
+            onCreated={() => { setGoalOpen(false); navigate("/financial?tab=goals"); }}
         />
       </>
   );

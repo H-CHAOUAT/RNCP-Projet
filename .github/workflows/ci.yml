@@ -26,13 +26,9 @@ jobs:
           --health-retries=5
 
     steps:
-      # Checkout the project code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # -------------------
-      # 🧠 BACKEND
-      # -------------------
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -47,9 +43,6 @@ jobs:
         working-directory: backend
         run: mvn test
 
-      # -------------------
-      # 🎨 FRONTEND
-      # -------------------
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -62,4 +55,3 @@ jobs:
       - name: Build Frontend
         working-directory: frontend
         run: npm run build
-

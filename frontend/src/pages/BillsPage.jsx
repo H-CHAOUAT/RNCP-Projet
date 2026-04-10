@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import DateInput from "../components/atoms/DateInput.jsx";
+import { apiFetch } from "../api/apiFetch";
 
 const fmtDate = (d) => {
     if (!d) return "";
@@ -33,11 +34,12 @@ export default function BillsPage() {
         catch { return { userId: null }; }
     }, []);
 
-    const [bills,    setBills]    = useState([]);
-    const [loading,  setLoading]  = useState(true);
-    const [showForm, setShowForm] = useState(false);
-    const [saving,   setSaving]   = useState(false);
-    const [message,  setMessage]  = useState({ type: "", text: "" });
+    const [bills,      setBills]      = useState([]);
+    const [loading,    setLoading]    = useState(true);
+    const [showForm,   setShowForm]   = useState(false);
+    const [saving,     setSaving]     = useState(false);
+    const [message,    setMessage]    = useState({ type: "", text: "" });
+    const [togglingId, setTogglingId] = useState(null);
     const [form, setForm] = useState({ title: "", amount: "", dueDate: "", description: "", paid: false });
 
     useEffect(() => {
@@ -47,12 +49,11 @@ export default function BillsPage() {
     useEffect(() => {
         if (!userId) { setLoading(false); return; }
         loadBills();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userId]);
 
     const loadBills = async () => {
         try {
-            const res = await fetch(`/api/bills/user/${userId}`);
+            const res = await apiFetch(`/api/bills/user/${userId}`);
             setBills(res.ok ? await res.json() : []);
         } catch { setBills([]); }
         finally { setLoading(false); }
@@ -64,7 +65,7 @@ export default function BillsPage() {
         setSaving(true);
         setMessage({ type: "", text: "" });
         try {
-            const res = await fetch(`/api/bills/user/${userId}`, {
+            const res = await apiFetch(`/api/bills/user/${userId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -92,8 +93,10 @@ export default function BillsPage() {
     };
 
     const togglePaid = async (bill) => {
+        if (togglingId === bill.id) return;
+        setTogglingId(bill.id);
         try {
-            const res = await fetch(`/api/bills/${bill.id}/paid`, {
+            const res = await apiFetch(`/api/bills/${bill.id}/paid`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ paid: !bill.paid }),
@@ -107,15 +110,21 @@ export default function BillsPage() {
                         ? `✅ ${bill.title} marked as paid — ${money(bill.amount)} deducted from your balance.`
                         : `↩️ ${bill.title} marked as unpaid — ${money(bill.amount)} refunded to your balance.`
                 });
+            } else {
+                setMessage({ type: "error", text: "❌ Failed to update bill." });
             }
-        } catch (e) { console.error("toggle paid:", e); }
+        } catch (e) {
+            console.error("toggle paid:", e);
+            setMessage({ type: "error", text: "❌ Network error." });
+        } finally {
+            setTogglingId(null);
+        }
     };
 
     const unpaid = bills.filter((b) => !b.paid);
     const paid   = bills.filter((b) =>  b.paid);
     const totalUnpaid = unpaid.reduce((s, b) => s + Number(b.amount ?? 0), 0);
 
-    // Notification alerts
     const overdueBills  = bills.filter(isOverdue);
     const dueTodayBills = bills.filter(isDueToday);
     const dueSoonBills  = bills.filter(b => isDueSoon(b) && !isDueToday(b));
@@ -133,7 +142,7 @@ export default function BillsPage() {
                 </button>
             </div>
 
-            {/* Notification banners */}
+            
             {overdueBills.length > 0 && (
                 <div className="rounded-xl border border-red-300 bg-red-50 p-4 space-y-2">
                     <div className="text-sm font-semibold text-red-800">⚠️ Overdue bills — please mark as paid</div>
@@ -173,14 +182,14 @@ export default function BillsPage() {
                 </div>
             )}
 
-            {/* Success/error message */}
+            
             {message.text && !showForm && (
                 <div className={`rounded-lg border p-3 text-sm ${message.type === "success" ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"}`}>
                     {message.text}
                 </div>
             )}
 
-            {/* Unpaid total */}
+            
             {unpaid.length > 0 && (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-center justify-between">
                     <div>
@@ -191,7 +200,7 @@ export default function BillsPage() {
                 </div>
             )}
 
-            {/* Add form */}
+            
             {showForm && (
                 <div className="rounded-xl border bg-white p-6 space-y-4">
                     <div>
@@ -242,7 +251,7 @@ export default function BillsPage() {
                 </div>
             )}
 
-            {/* List */}
+            
             {loading ? (
                 <div className="rounded-xl border bg-white p-8 text-center text-dark/40">Loading bills...</div>
             ) : bills.length === 0 ? (
@@ -255,11 +264,11 @@ export default function BillsPage() {
                 <div className="space-y-3">
                     {unpaid.length > 0 && <>
                         <div className="text-xs font-semibold text-dark/40 uppercase tracking-wide">Upcoming</div>
-                        {unpaid.map((b) => <BillRow key={b.id} bill={b} onToggle={togglePaid} />)}
+                        {unpaid.map((b) => <BillRow key={b.id} bill={b} onToggle={togglePaid} toggling={togglingId === b.id} />)}
                     </>}
                     {paid.length > 0 && <>
                         <div className="mt-4 text-xs font-semibold text-dark/40 uppercase tracking-wide">Paid</div>
-                        {paid.map((b) => <BillRow key={b.id} bill={b} onToggle={togglePaid} />)}
+                        {paid.map((b) => <BillRow key={b.id} bill={b} onToggle={togglePaid} toggling={togglingId === b.id} />)}
                     </>}
                 </div>
             )}
@@ -267,7 +276,7 @@ export default function BillsPage() {
     );
 }
 
-function BillRow({ bill, onToggle }) {
+function BillRow({ bill, onToggle, toggling }) {
     const overdue = isOverdue(bill);
     const today   = isDueToday(bill);
     const soon    = isDueSoon(bill);
@@ -276,8 +285,8 @@ function BillRow({ bill, onToggle }) {
         <div className={`rounded-xl border bg-white p-4 flex items-center justify-between gap-4 ${bill.paid ? "opacity-60" : ""} ${overdue ? "border-red-200" : today ? "border-amber-300" : ""}`}>
             <div className="flex items-center gap-3">
                 <button
-                    className={`h-5 w-5 rounded-full border-2 flex-shrink-0 transition ${bill.paid ? "bg-green-500 border-green-500" : "border-slate-300 hover:border-green-400"}`}
-                    onClick={() => onToggle(bill)} title={bill.paid ? "Mark unpaid" : "Mark paid"}>
+                    className={`h-5 w-5 rounded-full border-2 flex-shrink-0 transition ${toggling ? "opacity-40 cursor-wait" : ""} ${bill.paid ? "bg-green-500 border-green-500" : "border-slate-300 hover:border-green-400"}`}
+                    onClick={() => onToggle(bill)} disabled={toggling} title={bill.paid ? "Mark unpaid" : "Mark paid"}>
                     {bill.paid && <span className="text-white text-xs flex items-center justify-center h-full w-full leading-none">✓</span>}
                 </button>
                 <div>

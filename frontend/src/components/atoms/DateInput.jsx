@@ -26,7 +26,6 @@ const toISO = (display) => {
 export default function DateInput({ value = "", onChange, className = "", placeholder = "dd/mm/yyyy" }) {
     const [display, setDisplay] = useState(toDisplay(value));
 
-    // Sync if parent changes value externally
     useEffect(() => {
         setDisplay(toDisplay(value));
     }, [value]);
@@ -34,14 +33,12 @@ export default function DateInput({ value = "", onChange, className = "", placeh
     const handleChange = (e) => {
         let raw = e.target.value;
 
-        // Auto-insert slashes as user types
         raw = raw.replace(/[^0-9/]/g, "");
         if (raw.length === 2 && !raw.includes("/")) raw = raw + "/";
         if (raw.length === 5 && raw.split("/").length === 2) raw = raw + "/";
 
         setDisplay(raw);
 
-        // Only call onChange when we have a complete valid date
         const iso = toISO(raw);
         if (iso) {
             onChange?.(iso);

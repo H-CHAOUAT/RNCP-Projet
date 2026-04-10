@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../api/apiFetch";
 
 const money = (n, currency = "EUR") => {
     try {
@@ -39,9 +40,9 @@ export default function DashboardPage() {
         }
 
         Promise.all([
-            fetch(`/api/financial/${userId}`).then(r => (r.ok ? r.json() : null)),
-            fetch(`/api/goals/user/${userId}`).then(r => (r.ok ? r.json() : [])),
-            fetch(`/api/bills/user/${userId}`).then(r => (r.ok ? r.json() : [])),
+            apiFetch(`/api/financial/${userId}`).then(r => (r.ok ? r.json() : null)),
+            apiFetch(`/api/goals/user/${userId}`).then(r => (r.ok ? r.json() : [])),
+            apiFetch(`/api/bills/user/${userId}`).then(r => (r.ok ? r.json() : [])),
         ])
             .then(([fin, g, b]) => {
                 setFinancial(fin);
@@ -49,28 +50,26 @@ export default function DashboardPage() {
                 setBills(b || []);
                 setSalaryPending(fin?.salaryPendingConfirmation ?? false);
             })
-            .catch(console.error)
+            .catch(() => {})
             .finally(() => setLoading(false));
     }, [userId]);
 
     const handleConfirmSalary = async () => {
         setConfirmingSalary(true);
         try {
-            const res = await fetch(`/api/financial/${userId}/confirm-salary`, { method: "POST" });
+            const res = await apiFetch(`/api/financial/${userId}/confirm-salary`, { method: "POST" });
             if (res.ok) {
                 setFinancial(await res.json());
                 setSalaryPending(false);
             }
-        } catch (e) {
-            console.error(e);
-        } finally {
+        } catch {} finally {
             setConfirmingSalary(false);
         }
     };
 
     const handleDismissSalary = async () => {
         setSalaryPending(false);
-        await fetch(`/api/financial/${userId}/dismiss-salary`, { method: "POST" }).catch(() => {});
+        await apiFetch(`/api/financial/${userId}/dismiss-salary`, { method: "POST" }).catch(() => {});
     };
 
     const currency = financial?.currency ?? "EUR";

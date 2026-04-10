@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import Button from "../../atoms/Button";
 import DateInput from "../../atoms/DateInput";
+import { apiFetch } from "../../../api/apiFetch";
 
 const inputCls = "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-wine outline-none";
 
@@ -28,7 +29,7 @@ export default function CreateBillModal({ open, onClose, onCreated }) {
 
         setSaving(true);
         try {
-            const res = await fetch(`/api/bills/user/${userId}`, {
+            const res = await apiFetch(`/api/bills/user/${userId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -57,7 +58,6 @@ export default function CreateBillModal({ open, onClose, onCreated }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-lg">
 
-                {/* Header */}
                 <div className="flex items-start justify-between mb-5">
                     <div>
                         <h2 className="text-xl font-semibold text-dark">Add a bill</h2>
