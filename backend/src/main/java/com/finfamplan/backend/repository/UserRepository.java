@@ -15,4 +15,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByEmail(String email);
 
     List<User> findByFamilyGroup_Id(Long familyGroupId);
+
+    long countByEmailStartingWith(String prefix);
 }
