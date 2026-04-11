@@ -10,21 +10,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: finfamdb
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -41,7 +26,7 @@ jobs:
 
       - name: Run Backend Tests
         working-directory: backend
-        run: mvn test
+        run: mvn test -Dspring.profiles.active=test
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
