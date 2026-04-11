@@ -20,13 +20,9 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
-      - name: Build Backend with Maven
+      - name: Build and Test Backend
         working-directory: backend
-        run: mvn -B clean package -DskipTests
-
-      - name: Run Backend Tests
-        working-directory: backend
-        run: mvn test -Dspring.profiles.active=test
+        run: mvn -B clean verify -Dspring.profiles.active=test
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
