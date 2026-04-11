@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@org.springframework.context.annotation.Profile("!test")
 public class DataSeeder implements CommandLineRunner {
 
     private final UserRepository userRepo;

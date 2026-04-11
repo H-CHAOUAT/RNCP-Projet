@@ -5,6 +5,7 @@ import com.finfamplan.backend.dto.RegisterRequest;
 import com.finfamplan.backend.model.Role;
 import com.finfamplan.backend.model.User;
 import com.finfamplan.backend.repository.UserRepository;
+import com.finfamplan.backend.service.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -12,19 +13,18 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Optional;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class AuthControllerTest {
 
-    @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private PasswordEncoder encoder;
+    @Mock private UserRepository userRepository;
+    @Mock private PasswordEncoder encoder;
+    @Mock private JwtService jwtService;
 
     @InjectMocks
     private AuthController authController;
@@ -35,76 +35,110 @@ class AuthControllerTest {
     }
 
     @Test
-    void testRegisterNewUserSuccess() {
-        RegisterRequest request = new RegisterRequest();
-        request.setFirstName("John");
-        request.setLastName("Doe");
-        request.setEmail("john@example.com");
-        request.setPassword("1234");
-        request.setRole("ADMIN");
+    void register_success() {
+        RegisterRequest req = new RegisterRequest();
+        req.setFirstName("Alice");
+        req.setLastName("Dupont");
+        req.setEmail("alice@example.com");
+        req.setPassword("SecurePass1");
+        req.setRole("PARENT");
 
-        when(userRepository.existsByEmail("john@example.com")).thenReturn(false);
-        when(encoder.encode("1234")).thenReturn("encoded1234");
+        when(userRepository.existsByEmail("alice@example.com")).thenReturn(false);
+        when(encoder.encode("SecurePass1")).thenReturn("hashed");
 
-        Map<String, Object> response = authController.register(request);
+        Map<String, Object> res = authController.register(req);
 
-        assertTrue((Boolean) response.get("success"));
-        assertEquals("User registered successfully", response.get("message"));
-        verify(userRepository, times(1)).save(any(User.class));
+        assertTrue((Boolean) res.get("success"));
+        assertEquals("User registered successfully", res.get("message"));
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
-    void testRegisterExistingUserFails() {
-        RegisterRequest request = new RegisterRequest();
-        request.setEmail("admin@example.com");
+    void register_emailAlreadyExists_fails() {
+        RegisterRequest req = new RegisterRequest();
+        req.setEmail("existing@example.com");
+        req.setPassword("SecurePass1");
+        req.setRole("PARENT");
 
-        when(userRepository.existsByEmail("admin@example.com")).thenReturn(true);
+        when(userRepository.existsByEmail("existing@example.com")).thenReturn(true);
 
-        Map<String, Object> response = authController.register(request);
+        Map<String, Object> res = authController.register(req);
 
-        assertFalse((Boolean) response.get("success"));
-        assertEquals("Email already exists", response.get("message"));
+        assertFalse((Boolean) res.get("success"));
+        assertEquals("Email already exists", res.get("message"));
+        verify(userRepository, never()).save(any());
     }
 
     @Test
-    void testLoginSuccess() {
-        LoginRequest request = new LoginRequest();
-        request.setEmail("admin@example.com");
-        request.setPassword("password123");
+    void register_passwordTooShort_fails() {
+        RegisterRequest req = new RegisterRequest();
+        req.setEmail("alice@example.com");
+        req.setPassword("short");
+        req.setRole("PARENT");
+
+        Map<String, Object> res = authController.register(req);
+
+        assertFalse((Boolean) res.get("success"));
+        assertEquals("Password must be at least 8 characters", res.get("message"));
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void login_success_returnsTokenAndUser() {
+        LoginRequest req = new LoginRequest();
+        req.setEmail("alice@example.com");
+        req.setPassword("SecurePass1");
 
         User user = new User();
         user.setUserId(1L);
-        user.setEmail("admin@example.com");
-        user.setPassword("encodedpass");
-        user.setRole(Role.ADMIN);
+        user.setEmail("alice@example.com");
+        user.setPassword("hashed");
+        user.setRole(Role.PARENT);
 
-        when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(user));
-        when(encoder.matches(eq("password123"), eq("encodedpass"))).thenReturn(true);
+        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(user));
+        when(encoder.matches("SecurePass1", "hashed")).thenReturn(true);
+        when(jwtService.generateToken(user)).thenReturn("jwt.token.value");
 
-        Map<String, Object> response = authController.login(request);
+        Map<String, Object> res = authController.login(req);
 
-        assertTrue((Boolean) response.get("success"));
-        assertEquals("Login successful", response.get("message"));
-        assertNotNull(((Map<?, ?>) response.get("user")).get("email"));
+        assertTrue((Boolean) res.get("success"));
+        assertEquals("jwt.token.value", res.get("token"));
+        assertNotNull(res.get("user"));
+        assertEquals("alice@example.com", ((Map<?, ?>) res.get("user")).get("email"));
     }
 
     @Test
-    void testLoginInvalidPassword() {
-        LoginRequest request = new LoginRequest();
-        request.setEmail("admin@example.com");
-        request.setPassword("wrong");
+    void login_wrongPassword_returnsInvalidCredentials() {
+        LoginRequest req = new LoginRequest();
+        req.setEmail("alice@example.com");
+        req.setPassword("wrong");
 
         User user = new User();
-        user.setEmail("admin@example.com");
-        user.setPassword("encoded");
-        user.setRole(Role.ADMIN);
+        user.setEmail("alice@example.com");
+        user.setPassword("hashed");
+        user.setRole(Role.PARENT);
 
-        when(userRepository.findByEmail("admin@example.com")).thenReturn(Optional.of(user));
-        when(encoder.matches("wrong", "encoded")).thenReturn(false);
+        when(userRepository.findByEmail("alice@example.com")).thenReturn(Optional.of(user));
+        when(encoder.matches("wrong", "hashed")).thenReturn(false);
 
-        Map<String, Object> response = authController.login(request);
+        Map<String, Object> res = authController.login(req);
 
-        assertFalse((Boolean) response.get("success"));
-        assertEquals("Invalid password", response.get("message"));
+        assertFalse((Boolean) res.get("success"));
+        assertEquals("Invalid credentials", res.get("message"));
+        verify(jwtService, never()).generateToken(any());
+    }
+
+    @Test
+    void login_unknownEmail_returnsInvalidCredentials() {
+        LoginRequest req = new LoginRequest();
+        req.setEmail("nobody@example.com");
+        req.setPassword("any");
+
+        when(userRepository.findByEmail("nobody@example.com")).thenReturn(Optional.empty());
+
+        Map<String, Object> res = authController.login(req);
+
+        assertFalse((Boolean) res.get("success"));
+        assertEquals("Invalid credentials", res.get("message"));
     }
 }
