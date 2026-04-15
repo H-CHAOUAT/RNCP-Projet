@@ -14,8 +14,6 @@ RUN npm run build
 FROM nginx:alpine
 
 COPY --from=builder /app/dist /usr/share/nginx/html
-# Use nginx's built-in template processing — auto-runs envsubst on startup
-RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/templates/default.conf.template
 
 EXPOSE 80
