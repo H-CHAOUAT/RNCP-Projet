@@ -5,6 +5,9 @@ import com.finfamplan.backend.dto.LoginRequest;
 import com.finfamplan.backend.dto.RegisterRequest;
 import com.finfamplan.backend.model.Role;
 import com.finfamplan.backend.model.User;
+import com.finfamplan.backend.repository.FinancialProfileRepository;
+import com.finfamplan.backend.repository.GoalContributionRepository;
+import com.finfamplan.backend.repository.GoalRepository;
 import com.finfamplan.backend.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,11 +29,17 @@ class AuthIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private UserRepository userRepository;
+    @Autowired private FinancialProfileRepository financialProfileRepository;
+    @Autowired private GoalContributionRepository goalContributionRepository;
+    @Autowired private GoalRepository goalRepository;
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private ObjectMapper objectMapper;
 
     @BeforeEach
     void setup() {
+        goalContributionRepository.deleteAll();
+        goalRepository.deleteAll();
+        financialProfileRepository.deleteAll();
         userRepository.deleteAll();
 
         User user = new User();
