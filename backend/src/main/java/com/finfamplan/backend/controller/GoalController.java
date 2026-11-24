@@ -73,6 +73,20 @@ public class GoalController {
         return toViewDto(saved);
     }
 
+    @DeleteMapping("/{goalId}/user/{userId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long goalId, @PathVariable Long userId) {
+        Goal goal = goalRepo.findById(goalId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Goal not found"));
+
+        if (!goal.getUser().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your goal");
+        }
+
+        // goal_contributions rows are removed by the ON DELETE CASCADE foreign key
+        goalRepo.delete(goal);
+    }
+
     @PostMapping("/{goalId}/contribute/user/{userId}")
     @Transactional
     public GoalViewDto contribute(

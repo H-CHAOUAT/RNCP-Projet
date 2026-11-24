@@ -15,5 +15,6 @@ public class CreateGoalRequest {
     @NotNull
     public BigDecimal targetAmount;
 
+    @NotNull
     public LocalDate deadline;
 }

@@ -51,6 +51,7 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
         if (!userId)                                       { setError("No user session. Please log in again."); return; }
         if (!title.trim())                                 { setError("Please enter a goal title."); return; }
         if (!targetAmount || Number(targetAmount) <= 0)    { setError("Please enter a valid target amount."); return; }
+        if (!deadline || Number.isNaN(new Date(deadline).getTime())) { setError("Please enter a valid deadline (dd/mm/yyyy)."); return; }
 
         setSaving(true);
         try {
@@ -61,7 +62,7 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                     title:        title.trim(),
                     description:  description.trim() || null,
                     targetAmount: Number(targetAmount),
-                    deadline:     deadline || null,
+                    deadline,
                 }),
             });
             if (!res.ok) { setError("❌ Create failed: " + await res.text()); return; }
@@ -131,7 +132,7 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                                    onChange={(e) => setTargetAmount(e.target.value)} placeholder="e.g. 2000" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1">Deadline (optional)</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Deadline *</label>
                             <DateInput
                                 value={deadline}
                                 onChange={(iso) => setDeadline(iso)}
