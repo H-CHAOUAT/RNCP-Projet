@@ -30,6 +30,7 @@ export default function DashboardPage() {
     const [financial, setFinancial] = useState(null);
     const [goals, setGoals] = useState([]);
     const [bills, setBills] = useState([]);
+    const [forecast, setForecast] = useState(null);
     const [salaryPending, setSalaryPending] = useState(false);
     const [confirmingSalary, setConfirmingSalary] = useState(false);
     const [goalIdx, setGoalIdx] = useState(0);
@@ -51,11 +52,13 @@ export default function DashboardPage() {
             apiFetch(`/api/financial/${userId}`).then(r => (r.ok ? r.json() : null)),
             apiFetch(`/api/goals/user/${userId}`).then(r => (r.ok ? r.json() : [])),
             apiFetch(`/api/bills/user/${userId}`).then(r => (r.ok ? r.json() : [])),
+            apiFetch(`/api/financial/${userId}/forecast`).then(r => (r.ok ? r.json() : null)),
         ])
-            .then(([fin, g, b]) => {
+            .then(([fin, g, b, fc]) => {
                 setFinancial(fin);
                 setGoals(g || []);
                 setBills(b || []);
+                setForecast(fc);
                 setSalaryPending(fin?.salaryPendingConfirmation ?? false);
             })
             .catch(() => {})
@@ -236,6 +239,33 @@ export default function DashboardPage() {
                     onClick={() => navigate("/financial?tab=analysis")}
                 />
             </div>
+
+            {forecast && (
+                <div
+                    className={`cursor-pointer rounded-2xl border p-5 shadow-sm transition hover:shadow-md text-left ${
+                        forecast.atRisk
+                            ? "border-red-300 bg-red-50"
+                            : forecast.belowThreshold
+                                ? "border-amber-300 bg-amber-50"
+                                : "bg-white"
+                    }`}
+                    onClick={() => navigate("/financial?tab=overview", { state: { highlightField: "alertThreshold" } })}
+                >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <div className="text-sm font-semibold text-dark">
+                                {forecast.atRisk ? "⚠️ Risque de découvert" : forecast.belowThreshold ? "⚠️ Sous votre seuil d'alerte" : "✅ Seuil d'alerte"}
+                            </div>
+                            <div className="mt-1 text-xs text-dark/50">
+                                Seuil actuel : <strong>{money(forecast.alertThreshold, currency)}</strong>
+                                {" · "}Prévu au {new Date(forecast.nextPayday + "T12:00:00").toLocaleDateString("fr-FR")} :{" "}
+                                <strong>{money(forecast.forecastBalance, currency)}</strong>
+                            </div>
+                        </div>
+                        <span className="text-xs font-medium text-wine">Ajuster le seuil →</span>
+                    </div>
+                </div>
+            )}
 
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
                 <div className="rounded-2xl border bg-white p-6 shadow-sm lg:col-span-2 text-left">

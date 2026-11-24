@@ -433,6 +433,7 @@ export default function FinancialPage() {
 
     const [activeTab, setActiveTab] = useState(getTabFromSearch);
     const openModal = location.state?.openModal ?? false;
+    const highlightField = location.state?.highlightField ?? null;
 
     useEffect(() => {
         setActiveTab(getTabFromSearch());
@@ -478,11 +479,11 @@ export default function FinancialPage() {
                 </nav>
             </div>
 
-            {activeTab === "Vue d'ensemble" && <FinancialForm />}
+            {activeTab === "Vue d'ensemble" && <FinancialForm highlightField={highlightField} />}
             {activeTab === "Objectifs" && (
                 <GoalsTab userId={userId} openModalImmediately={openModal} />
             )}
-            {activeTab === "Dépenses" && <FinancialForm />}
+            {activeTab === "Dépenses" && <FinancialForm highlightField={highlightField} />}
             {activeTab === "Analyse" && <AnalysisTab userId={userId} />}
         </div>
     );

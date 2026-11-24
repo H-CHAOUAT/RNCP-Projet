@@ -40,7 +40,7 @@ const toFormRows = (rawExpenses) =>
         };
     });
 
-export default function FinancialForm() {
+export default function FinancialForm({ highlightField = null }) {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" });
@@ -59,6 +59,16 @@ export default function FinancialForm() {
     ]);
 
     const prevIncomeRef = useRef("0");
+    const alertThresholdRef = useRef(null);
+    const [highlightAlertThreshold, setHighlightAlertThreshold] = useState(false);
+
+    useEffect(() => {
+        if (highlightField !== "alertThreshold") return;
+        alertThresholdRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        setHighlightAlertThreshold(true);
+        const t = setTimeout(() => setHighlightAlertThreshold(false), 2500);
+        return () => clearTimeout(t);
+    }, [highlightField]);
 
     const userId = useMemo(() => {
         try {
@@ -269,14 +279,19 @@ export default function FinancialForm() {
                         />
                     </FormField>
 
-                    <FormField label="Seuil d'alerte">
-                        <Input
-                            type="number"
-                            value={alertThreshold}
-                            onChange={(e) => setAlertThreshold(e.target.value)}
-                            placeholder="0"
-                        />
-                    </FormField>
+                    <div
+                        ref={alertThresholdRef}
+                        className={`rounded-lg transition-shadow ${highlightAlertThreshold ? "ring-4 ring-wine/50" : ""}`}
+                    >
+                        <FormField label="Seuil d'alerte">
+                            <Input
+                                type="number"
+                                value={alertThreshold}
+                                onChange={(e) => setAlertThreshold(e.target.value)}
+                                placeholder="0"
+                            />
+                        </FormField>
+                    </div>
                 </div>
                 <p className="text-xs text-slate-400 -mt-2">
                     Vous serez alerté si votre solde prévisionnel passe sous ce montant (0 par défaut).
