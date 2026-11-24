@@ -50,7 +50,7 @@ export default function FinancialForm() {
     const [paydayDay, setPaydayDay] = useState("1");
     const [lastSalaryApplied, setLastSalaryApplied] = useState(null);
 
-    const [balanceLocked] = useState(false);
+    const [, setBalanceLocked] = useState(false);
 
     const [expenses, setExpenses] = useState([
         { category: "RENT", amount: "0", custom: false, customLabel: "" },
