@@ -40,6 +40,10 @@ public class FinancialProfile {
 
     private LocalDate lastSalaryDismissedDate;
 
+    // Story 5: user-configurable budget alert threshold (default 0).
+    @Column(name = "alert_threshold", nullable = false)
+    private BigDecimal alertThreshold = BigDecimal.ZERO;
+
     @OneToMany(mappedBy = "financialProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ExpenseItem> expenses = new ArrayList<>();
 
@@ -121,6 +125,14 @@ public class FinancialProfile {
 
     public void setLastSalaryDismissedDate(LocalDate lastSalaryDismissedDate) {
         this.lastSalaryDismissedDate = lastSalaryDismissedDate;
+    }
+
+    public BigDecimal getAlertThreshold() {
+        return alertThreshold;
+    }
+
+    public void setAlertThreshold(BigDecimal alertThreshold) {
+        this.alertThreshold = alertThreshold;
     }
 
     public List<ExpenseItem> getExpenses() {

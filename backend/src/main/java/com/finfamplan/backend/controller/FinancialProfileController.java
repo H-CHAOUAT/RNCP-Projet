@@ -1,6 +1,8 @@
 package com.finfamplan.backend.controller;
 
 import com.finfamplan.backend.dto.FinancialProfileDto;
+import com.finfamplan.backend.dto.ForecastResponseDto;
+import com.finfamplan.backend.dto.MultiMonthForecastResponseDto;
 import com.finfamplan.backend.model.ExpenseItem;
 import com.finfamplan.backend.model.FinancialProfile;
 import com.finfamplan.backend.model.Transaction;
@@ -9,6 +11,7 @@ import com.finfamplan.backend.repository.FinancialProfileRepository;
 import com.finfamplan.backend.repository.TransactionRepository;
 import com.finfamplan.backend.repository.UserRepository;
 import com.finfamplan.backend.security.AccessGuard;
+import com.finfamplan.backend.service.ForecastService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,12 +28,41 @@ public class FinancialProfileController {
     private final UserRepository             userRepo;
     private final TransactionRepository      txRepo;
     private final AccessGuard                accessGuard;
+    private final ForecastService            forecastService;
 
     public FinancialProfileController(FinancialProfileRepository f,
                                       UserRepository u,
                                       TransactionRepository t,
-                                      AccessGuard accessGuard) {
+                                      AccessGuard accessGuard,
+                                      ForecastService forecastService) {
         financialRepo = f; userRepo = u; txRepo = t; this.accessGuard = accessGuard;
+        this.forecastService = forecastService;
+    }
+
+    /**
+     * Stories 1, 2, 5: forecast balance until the next payday, the first
+     * at-risk due date (if any), and whether it's below the user's alert
+     * threshold.
+     */
+    @GetMapping("/{userId}/forecast")
+    public ForecastResponseDto forecast(@PathVariable Long userId, HttpServletRequest request) {
+        accessGuard.requireSelf(request, userId);
+        FinancialProfile profile = financialRepo.findByUser_UserId(userId)
+                .orElseGet(() -> createDefault(userId));
+        return forecastService.forecastUntilNextPayday(profile);
+    }
+
+    /** Story 6: multi-month forecast with a low/high range (default 3 months). */
+    @GetMapping("/{userId}/forecast/multi-month")
+    public MultiMonthForecastResponseDto multiMonthForecast(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "3") int months,
+            HttpServletRequest request
+    ) {
+        accessGuard.requireSelf(request, userId);
+        FinancialProfile profile = financialRepo.findByUser_UserId(userId)
+                .orElseGet(() -> createDefault(userId));
+        return forecastService.forecastMultiMonth(profile, months);
     }
 
     @GetMapping("/{userId}")
@@ -70,6 +102,10 @@ public class FinancialProfileController {
 
         if (dto.paydayDay != null) {
             profile.setPaydayDay(Math.max(1, Math.min(28, dto.paydayDay)));
+        }
+
+        if (dto.alertThreshold != null) {
+            profile.setAlertThreshold(dto.alertThreshold);
         }
 
         if (profile.getExpenses() == null) profile.setExpenses(new ArrayList<>());
@@ -208,6 +244,7 @@ public class FinancialProfileController {
         fp.setBalanceLocked(false);
         fp.setSalaryPendingConfirmation(false);
         fp.setLastSalaryDismissedDate(null);
+        fp.setAlertThreshold(BigDecimal.ZERO);
 
         return financialRepo.save(fp);
     }
@@ -222,6 +259,7 @@ public class FinancialProfileController {
         dto.balanceLocked = p.getBalanceLocked();
         dto.salaryPendingConfirmation = p.getSalaryPendingConfirmation();
         dto.lastSalaryDismissedDate = p.getLastSalaryDismissedDate();
+        dto.alertThreshold = p.getAlertThreshold();
 
         dto.expenses = p.getExpenses().stream().map(e -> {
             FinancialProfileDto.ExpenseItemDto ed = new FinancialProfileDto.ExpenseItemDto();

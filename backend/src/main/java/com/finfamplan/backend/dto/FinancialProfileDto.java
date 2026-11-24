@@ -13,6 +13,7 @@ public class FinancialProfileDto {
     public Boolean balanceLocked;
     public Boolean salaryPendingConfirmation;
     public LocalDate lastSalaryDismissedDate;
+    public BigDecimal alertThreshold;
     public List<ExpenseItemDto> expenses;
 
     public static class ExpenseItemDto {
