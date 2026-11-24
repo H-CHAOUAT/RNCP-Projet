@@ -10,6 +10,17 @@ const monthLabel = (m) => {
     } catch { return m; }
 };
 
+const MONTH_NAMES = [
+    "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+    "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+];
+
+// <input type="month"> renders as a plain text field on Firefox/Linux (no
+// native picker), so we build an equivalent month+year pair of <select>s
+// that look and behave the same on every browser.
+const currentYear = new Date().getFullYear();
+const YEAR_OPTIONS = [currentYear - 2, currentYear - 1, currentYear, currentYear + 1];
+
 const money = (n, currency = "EUR") => {
     try { return new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(Number(n ?? 0)); }
     catch { return `${Number(n ?? 0).toFixed(2)} ${currency}`; }
@@ -126,6 +137,9 @@ export default function TransactionsPage() {
     const totalExpense = transactions.filter(t => t.type === "EXPENSE").reduce((s, t) => s + Number(t.amount ?? 0), 0);
     const net = totalIncome - totalExpense;
 
+    const [selectedYear, selectedMonth] = monthFilter ? monthFilter.split("-") : ["", ""];
+    const buildMonthFilter = (month, year) => (month && year ? `${year}-${month}` : "");
+
     return (
         <div className="mx-auto max-w-5xl space-y-6">
             <div className="flex items-start justify-between gap-4">
@@ -207,8 +221,26 @@ export default function TransactionsPage() {
                 </div>
                 <div>
                     <label className="text-xs font-medium text-slate-600 mb-1 block">Mois</label>
-                    <input type="month" className="rounded-lg border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine"
-                           value={monthFilter} onChange={e => setMonthFilter(e.target.value)} />
+                    <div className="flex gap-1.5">
+                        <select
+                            className="rounded-lg border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine"
+                            value={selectedMonth}
+                            onChange={e => setMonthFilter(buildMonthFilter(e.target.value, selectedYear))}
+                        >
+                            <option value="">Mois</option>
+                            {MONTH_NAMES.map((name, i) => (
+                                <option key={name} value={String(i + 1).padStart(2, "0")}>{name}</option>
+                            ))}
+                        </select>
+                        <select
+                            className="rounded-lg border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine"
+                            value={selectedYear}
+                            onChange={e => setMonthFilter(buildMonthFilter(selectedMonth, e.target.value))}
+                        >
+                            <option value="">Année</option>
+                            {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+                        </select>
+                    </div>
                 </div>
                 <div>
                     <label className="text-xs font-medium text-slate-600 mb-1 block">Catégorie</label>
