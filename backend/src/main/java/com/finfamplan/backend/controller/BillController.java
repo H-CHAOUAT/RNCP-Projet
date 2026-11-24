@@ -48,7 +48,7 @@ public class BillController {
                                           HttpServletRequest request) {
         accessGuard.requireSelf(request, userId);
         User user = userRepo.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         String     title  = (String) body.get("title");
         BigDecimal amount = body.get("amount") != null
@@ -84,10 +84,10 @@ public class BillController {
                                           @RequestBody Map<String, Object> body,
                                           HttpServletRequest request) {
         Bill bill = billRepo.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bill not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Facture introuvable"));
 
         if (bill.getUser() == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Bill has no associated user");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Cette facture n'a aucun utilisateur associé");
         }
         accessGuard.requireSelf(request, bill.getUser().getUserId());
 
@@ -102,7 +102,7 @@ public class BillController {
 
         User billUser = bill.getUser();
         if (billUser == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Bill has no associated user");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Cette facture n'a aucun utilisateur associé");
         }
 
         if (!wasPaid && nowPaid && amount.compareTo(BigDecimal.ZERO) > 0) {
@@ -120,7 +120,7 @@ public class BillController {
             tx.setType("INCOME");
             tx.setCategory("BILL_REVERSAL");
             tx.setAmount(amount);
-            tx.setDescription("Bill reversed: " + bill.getTitle());
+            tx.setDescription("Facture annulée : " + bill.getTitle());
             tx.setDate(LocalDate.now());
             txRepo.save(tx);
         }
@@ -135,7 +135,7 @@ public class BillController {
         tx.setType("EXPENSE");
         tx.setCategory("BILLS");
         tx.setAmount(amount);
-        tx.setDescription("Bill paid: " + title);
+        tx.setDescription("Facture payée : " + title);
         tx.setDate(dueDate != null ? dueDate : LocalDate.now());
         txRepo.save(tx);
 

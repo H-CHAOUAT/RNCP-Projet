@@ -27,20 +27,20 @@ public class AccessGuard {
     public Long currentUserId(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
         if (header == null || !header.startsWith("Bearer ")) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing token");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Jeton manquant");
         }
 
         Long userId;
         try {
             userId = jwtService.extractUserId(header.substring(7));
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid token");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Jeton invalide");
         }
 
         if (userId == null) {
             // Token issued before the userId claim existed: force a re-login
             // instead of silently trusting the URL.
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please log in again");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Veuillez vous reconnecter");
         }
         return userId;
     }
@@ -48,7 +48,7 @@ public class AccessGuard {
     /** Throws 403 unless the caller IS userId. */
     public void requireSelf(HttpServletRequest request, Long userId) {
         if (userId == null || !currentUserId(request).equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your resource");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cette ressource ne vous appartient pas");
         }
     }
 }

@@ -38,15 +38,15 @@ public class UserController {
     public User getUserById(@PathVariable Long id, HttpServletRequest request) {
         accessGuard.requireSelf(request, id);
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
     }
 
     @GetMapping("/family/{familyGroupId}")
     public List<User> getUsersByFamilyGroup(@PathVariable Long familyGroupId, HttpServletRequest request) {
         User caller = userRepository.findById(accessGuard.currentUserId(request))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please log in again"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Veuillez vous reconnecter"));
         if (caller.getFamilyGroup() == null || !caller.getFamilyGroup().getId().equals(familyGroupId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your family group");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Ce foyer ne vous appartient pas");
         }
         return userRepository.findByFamilyGroup_Id(familyGroupId);
     }
@@ -57,13 +57,13 @@ public class UserController {
         return userRepository.findById(id).map(user -> {
             String newEmail = updatedUser.getEmail().trim().toLowerCase();
             if (!newEmail.equalsIgnoreCase(user.getEmail()) && userRepository.existsByEmail(newEmail)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email already in use");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cet e-mail est déjà utilisé");
             }
             user.setFirstName(updatedUser.getFirstName());
             user.setLastName(updatedUser.getLastName());
             user.setEmail(updatedUser.getEmail());
             return userRepository.save(user);
-        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
     }
 
     @PutMapping("/{id}/password")
@@ -74,35 +74,35 @@ public class UserController {
     ) {
         accessGuard.requireSelf(request, id);
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         String currentPassword = body.get("currentPassword");
         String newPassword = body.get("newPassword");
 
         if (currentPassword == null || newPassword == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Both currentPassword and newPassword are required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le mot de passe actuel et le nouveau mot de passe sont requis");
         }
 
         if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Current password is incorrect");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Le mot de passe actuel est incorrect");
         }
 
         if (newPassword.length() < 8) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "New password must be at least 8 characters");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le nouveau mot de passe doit contenir au moins 8 caractères");
         }
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        return Map.of("message", "Password updated successfully");
+        return Map.of("message", "Mot de passe mis à jour avec succès");
     }
 
     @PostMapping("/{id}/logout-all")
     public Map<String, String> logoutAll(@PathVariable Long id, HttpServletRequest request) {
         accessGuard.requireSelf(request, id);
         userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        return Map.of("message", "All sessions terminated. Please log in again on each device.");
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
+        return Map.of("message", "Toutes les sessions ont été fermées. Reconnectez-vous sur chaque appareil.");
     }
 
     @PostMapping("/family/invite")
@@ -113,15 +113,15 @@ public class UserController {
         String roleStr = body.get("role").toString().toUpperCase();
 
         User inviter = userRepository.findById(inviterUserId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Inviter not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur invitant introuvable"));
 
         if (inviter.getFamilyGroup() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Inviter has no family group");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vous n'appartenez à aucun foyer");
         }
 
         User invitee = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "No account found with email: " + email + ". They must register first."));
+                        "Aucun compte trouvé pour l'adresse " + email + ". Cette personne doit d'abord s'inscrire."));
 
         invitee.setFamilyGroup(inviter.getFamilyGroup());
 
@@ -129,14 +129,14 @@ public class UserController {
             com.finfamplan.backend.model.Role role = com.finfamplan.backend.model.Role.valueOf(roleStr);
             invitee.setRole(role);
         } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid role: " + roleStr);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rôle invalide : " + roleStr);
         }
 
         userRepository.save(invitee);
 
         return Map.of(
                 "success", true,
-                "message", invitee.getFirstName() + " " + invitee.getLastName() + " added to your family."
+                "message", invitee.getFirstName() + " " + invitee.getLastName() + " a été ajouté(e) à votre foyer."
         );
     }
 

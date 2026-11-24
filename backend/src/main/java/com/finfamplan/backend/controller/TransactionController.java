@@ -35,7 +35,7 @@ public class TransactionController {
     public List<Transaction> getTransactions(@PathVariable Long userId, HttpServletRequest request) {
         accessGuard.requireSelf(request, userId);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         if ("PARENT".equals(user.getRole().name()) && user.getFamilyGroup() != null) {
             return transactionRepository.findByUser_FamilyGroup_IdOrderByDateDesc(
@@ -54,18 +54,18 @@ public class TransactionController {
     ) {
         accessGuard.requireSelf(request, userId);
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         String type = body.getOrDefault("type", "EXPENSE").toString().toUpperCase();
         if (!type.equals("INCOME") && !type.equals("EXPENSE")) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "type must be INCOME or EXPENSE");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le type doit être INCOME ou EXPENSE");
         }
 
         Object amountObj = body.get("amount");
-        if (amountObj == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "amount is required");
+        if (amountObj == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le montant est requis");
         BigDecimal amount = new BigDecimal(amountObj.toString());
         if (amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "amount must be > 0");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le montant doit être supérieur à 0");
         }
 
         Transaction t = new Transaction();

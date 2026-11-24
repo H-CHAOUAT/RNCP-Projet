@@ -53,9 +53,9 @@ public class GoalController {
     @GetMapping("/family/{familyGroupId}")
     public List<GoalViewDto> listByFamily(@PathVariable Long familyGroupId, HttpServletRequest request) {
         User caller = userRepo.findById(accessGuard.currentUserId(request))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please log in again"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Veuillez vous reconnecter"));
         if (caller.getFamilyGroup() == null || !caller.getFamilyGroup().getId().equals(familyGroupId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your family group");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Ce foyer ne vous appartient pas");
         }
         return goalRepo.findByUser_FamilyGroup_Id(familyGroupId)
                 .stream()
@@ -68,7 +68,7 @@ public class GoalController {
                               HttpServletRequest request) {
         accessGuard.requireSelf(request, userId);
         User user = userRepo.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         Goal g = new Goal();
         g.setUser(user);
@@ -91,10 +91,10 @@ public class GoalController {
     public void delete(@PathVariable Long goalId, @PathVariable Long userId, HttpServletRequest request) {
         accessGuard.requireSelf(request, userId);
         Goal goal = goalRepo.findById(goalId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Goal not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Objectif introuvable"));
 
         if (!goal.getUser().getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your goal");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cet objectif ne vous appartient pas");
         }
 
         // goal_contributions rows are removed by the ON DELETE CASCADE foreign key
@@ -111,10 +111,10 @@ public class GoalController {
         accessGuard.requireSelf(request, userId);
 
         Goal goal = goalRepo.findById(goalId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Goal not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Objectif introuvable"));
 
         if (!goal.getUser().getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your goal");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cet objectif ne vous appartient pas");
         }
 
         goal.setPlanLabel(req.label);
@@ -134,26 +134,26 @@ public class GoalController {
     ) {
         accessGuard.requireSelf(request, userId);
         if (req.amount == null || req.amount.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount must be > 0");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le montant doit être supérieur à 0");
         }
 
         User user = userRepo.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         Goal goal = goalRepo.findById(goalId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Goal not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Objectif introuvable"));
 
         if (!goal.getUser().getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your goal");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cet objectif ne vous appartient pas");
         }
 
         FinancialProfile fp = financialRepo.findByUser_UserId(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Financial profile missing"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profil financier manquant"));
 
         BigDecimal current = fp.getCurrentBalance() != null ? fp.getCurrentBalance() : BigDecimal.ZERO;
 
         if (current.compareTo(req.amount) < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Solde insuffisant");
         }
 
         fp.setCurrentBalance(current.subtract(req.amount));
@@ -178,18 +178,18 @@ public class GoalController {
         accessGuard.requireSelf(request, userId);
 
         Goal goal = goalRepo.findById(goalId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Goal not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Objectif introuvable"));
 
         if (!goal.getUser().getUserId().equals(userId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your goal");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cet objectif ne vous appartient pas");
         }
 
         if (goal.getDeadline() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Goal deadline is required for suggestions");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Une date limite est requise pour calculer des suggestions");
         }
 
         FinancialProfile fp = financialRepo.findByUser_UserId(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Financial profile missing"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profil financier manquant"));
 
         String currency = fp.getCurrency() != null ? fp.getCurrency() : "EUR";
         int paydayDay = fp.getPaydayDay() != null ? fp.getPaydayDay() : 1;
@@ -204,7 +204,7 @@ public class GoalController {
         LocalDate deadline = goal.getDeadline();
 
         if (deadline.isBefore(today)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Deadline is in the past");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La date limite est déjà passée");
         }
 
         LocalDate nextPayday = computeNextPayday(today, paydayDay);
@@ -216,22 +216,22 @@ public class GoalController {
                 .divide(BigDecimal.valueOf(paydaysToDeadline), 2, RoundingMode.CEILING);
 
         GoalSuggestionDto onTime = new GoalSuggestionDto();
-        onTime.label = "On time";
+        onTime.label = "Dans les temps";
         onTime.amountPerPayday = base;
         onTime.paydaysToDeadline = paydaysToDeadline;
-        onTime.note = "Recommended amount each payday to reach the deadline.";
+        onTime.note = "Montant recommandé à chaque paie pour atteindre la date limite.";
 
         GoalSuggestionDto aggressive = new GoalSuggestionDto();
-        aggressive.label = "Aggressive (+20%)";
+        aggressive.label = "Rapide (+20%)";
         aggressive.amountPerPayday = base.multiply(BigDecimal.valueOf(1.2)).setScale(2, RoundingMode.CEILING);
         aggressive.paydaysToDeadline = paydaysToDeadline;
-        aggressive.note = "Build a buffer (helpful if you may skip a month).";
+        aggressive.note = "Constituez une marge (utile si vous sautez un mois).";
 
         GoalSuggestionDto relaxed = new GoalSuggestionDto();
-        relaxed.label = "Relaxed (-20%)";
+        relaxed.label = "Souple (-20%)";
         relaxed.amountPerPayday = base.multiply(BigDecimal.valueOf(0.8)).setScale(2, RoundingMode.CEILING);
         relaxed.paydaysToDeadline = paydaysToDeadline;
-        relaxed.note = "Lower contribution now, but you may need to increase later.";
+        relaxed.note = "Contribution plus faible pour l'instant, à augmenter peut-être plus tard.";
 
         GoalSuggestionsResponseDto resp = new GoalSuggestionsResponseDto();
         resp.goalId = goal.getId();

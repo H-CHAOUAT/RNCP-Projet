@@ -129,7 +129,7 @@ public class FinancialProfileController {
                 tx.setType("INCOME");
                 tx.setCategory("SALARY");
                 tx.setAmount(income);
-                tx.setDescription("Monthly salary confirmed");
+                tx.setDescription("Salaire mensuel confirmé");
                 tx.setDate(LocalDate.now());
                 txRepo.save(tx);
             } catch (Exception ignored) {
@@ -143,7 +143,7 @@ public class FinancialProfileController {
                 tx.setType("EXPENSE");
                 tx.setCategory("FIXED_EXPENSES");
                 tx.setAmount(expenses);
-                tx.setDescription("Monthly fixed expenses deducted on payday");
+                tx.setDescription("Charges fixes mensuelles déduites à la paie");
                 tx.setDate(LocalDate.now());
                 txRepo.save(tx);
             } catch (Exception ignored) {

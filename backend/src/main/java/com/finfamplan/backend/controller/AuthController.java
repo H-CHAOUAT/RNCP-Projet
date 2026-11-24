@@ -30,11 +30,11 @@ public class AuthController {
     @PostMapping("/register")
     public Map<String, Object> register(@RequestBody RegisterRequest request) {
         if (request.getPassword() == null || request.getPassword().length() < 8) {
-            return Map.of("success", false, "message", "Password must be at least 8 characters");
+            return Map.of("success", false, "message", "Le mot de passe doit contenir au moins 8 caractères");
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            return Map.of("success", false, "message", "Email already exists");
+            return Map.of("success", false, "message", "Cet e-mail est déjà utilisé");
         }
 
         User u = new User();
@@ -46,15 +46,15 @@ public class AuthController {
         try {
             role = Role.valueOf(request.getRole().trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            return Map.of("success", false, "message", "Invalid role. Allowed: ADULT, PARENT, CHILD");
+            return Map.of("success", false, "message", "Rôle invalide. Autorisés : ADULT, PARENT, CHILD");
         }
         if (role == Role.ADMIN) {
-            return Map.of("success", false, "message", "Invalid role. Allowed: ADULT, PARENT, CHILD");
+            return Map.of("success", false, "message", "Rôle invalide. Autorisés : ADULT, PARENT, CHILD");
         }
         u.setRole(role);
         userRepository.save(u);
 
-        return Map.of("success", true, "message", "User registered successfully");
+        return Map.of("success", true, "message", "Compte créé avec succès");
     }
 
     @PostMapping("/login")
@@ -75,15 +75,15 @@ public class AuthController {
 
                         Map<String, Object> response = new HashMap<>();
                         response.put("success", true);
-                        response.put("message", "Login successful");
+                        response.put("message", "Connexion réussie");
                         response.put("token", token);
                         response.put("user", userMap);
 
                         return response;
                     } else {
-                        return Map.<String, Object>of("success", false, "message", "Invalid credentials");
+                        return Map.<String, Object>of("success", false, "message", "Identifiants invalides");
                     }
                 })
-                .orElse(Map.<String, Object>of("success", false, "message", "Invalid credentials"));
+                .orElse(Map.<String, Object>of("success", false, "message", "Identifiants invalides"));
     }
 }

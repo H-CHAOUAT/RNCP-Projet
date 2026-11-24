@@ -52,16 +52,16 @@ public class FamilyInviteController {
     @PostMapping("/invite-code/generate")
     public Map<String, Object> generateCode(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         if (body.get("userId") == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId est requis");
         Long userId = Long.valueOf(body.get("userId").toString());
         accessGuard.requireSelf(request, userId);
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         if (user.getFamilyGroup() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "You are not part of a family group yet. Create one first.");
+                    "Vous n'appartenez à aucun foyer pour l'instant. Créez-en un d'abord.");
         }
 
         String code = generateUniqueCode();
@@ -74,30 +74,30 @@ public class FamilyInviteController {
 
         return Map.of(
                 "code", code,
-                "message", "Share this code with your family member. It can be used once."
+                "message", "Partagez ce code avec un membre de votre foyer. Il n'est valable qu'une seule fois."
         );
     }
 
     @PostMapping("/invite-code/join")
     public Map<String, Object> joinWithCode(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         if (body.get("userId") == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId est requis");
         if (body.get("code") == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "code is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le code est requis");
         Long userId = Long.valueOf(body.get("userId").toString());
         accessGuard.requireSelf(request, userId);
         String code = body.get("code").toString().trim().toUpperCase();
         String roleStr = body.getOrDefault("role", "CHILD").toString().toUpperCase();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         var rows = jdbc.queryForList(
                 "SELECT id, family_group_id, used FROM family_invite_codes WHERE code = ?", code
         );
 
         if (rows.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Invalid code. Check it and try again.");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Code invalide. Vérifiez-le et réessayez.");
         }
 
         Map<String, Object> row = rows.get(0);
@@ -105,14 +105,14 @@ public class FamilyInviteController {
 
         if (used) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "This code has already been used. Ask your family to generate a new one.");
+                    "Ce code a déjà été utilisé. Demandez à votre foyer d'en générer un nouveau.");
         }
 
         Long familyGroupId = ((Number) row.get("family_group_id")).longValue();
         Long codeId = ((Number) row.get("id")).longValue();
 
         FamilyGroup group = familyGroupRepository.findById(familyGroupId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Family group not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Foyer introuvable"));
 
         try {
             com.finfamplan.backend.model.Role role = com.finfamplan.backend.model.Role.valueOf(roleStr);
@@ -128,26 +128,26 @@ public class FamilyInviteController {
 
         return Map.of(
                 "success", true,
-                "message", "You've joined the family group successfully!"
+                "message", "Vous avez rejoint le foyer avec succès !"
         );
     }
 
     @PostMapping("/create-group")
     public Map<String, Object> createGroup(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         if (body.get("userId") == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId est requis");
         Long userId = Long.valueOf(body.get("userId").toString());
         accessGuard.requireSelf(request, userId);
-        String name = body.getOrDefault("name", "My Family").toString().trim();
+        String name = body.getOrDefault("name", "Ma famille").toString().trim();
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
         if (user.getFamilyGroup() != null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You already have a family group");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vous avez déjà un foyer");
 
         FamilyGroup group = new FamilyGroup();
-        group.setName(name.isEmpty() ? "My Family" : name);
+        group.setName(name.isEmpty() ? "Ma famille" : name);
         group.setCreatedAt(LocalDateTime.now());
         group.setUpdatedAt(LocalDateTime.now());
         FamilyGroup saved = familyGroupRepository.save(group);
@@ -155,13 +155,13 @@ public class FamilyInviteController {
         user.setFamilyGroup(saved);
         userRepository.save(user);
 
-        return Map.of("id", saved.getId(), "name", saved.getName(), "message", "Family group created!");
+        return Map.of("id", saved.getId(), "name", saved.getName(), "message", "Foyer créé !");
     }
 
     @PostMapping("/transfer")
     public Map<String, Object> transfer(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         if (body.get("fromUserId") == null || body.get("toUserId") == null || body.get("amount") == null)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fromUserId, toUserId and amount are required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fromUserId, toUserId et amount sont requis");
 
         Long fromUserId = Long.valueOf(body.get("fromUserId").toString());
         Long toUserId   = Long.valueOf(body.get("toUserId").toString());
@@ -170,26 +170,26 @@ public class FamilyInviteController {
         String note = body.get("note") != null ? body.get("note").toString().trim() : null;
 
         if (amount.compareTo(BigDecimal.ZERO) <= 0)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount must be > 0");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le montant doit être supérieur à 0");
 
         User fromUser = userRepository.findById(fromUserId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sender not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expéditeur introuvable"));
         User toUser = userRepository.findById(toUserId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipient not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Destinataire introuvable"));
 
         String role = fromUser.getRole().name();
         if (!role.equals("PARENT"))
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only PARENT can send allowances");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Seul un parent peut envoyer de l'argent de poche");
 
         if (fromUser.getFamilyGroup() == null || toUser.getFamilyGroup() == null
                 || !fromUser.getFamilyGroup().getId().equals(toUser.getFamilyGroup().getId()))
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Both users must be in the same family group");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Les deux utilisateurs doivent appartenir au même foyer");
 
         FinancialProfile fromFp = fpRepo.findByUser_UserId(fromUserId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sender has no financial profile"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "L'expéditeur n'a pas de profil financier"));
         BigDecimal fromBalance = fromFp.getCurrentBalance() != null ? fromFp.getCurrentBalance() : BigDecimal.ZERO;
         if (fromBalance.compareTo(amount) < 0)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Solde insuffisant");
 
         fromFp.setCurrentBalance(fromBalance.subtract(amount));
         fpRepo.save(fromFp);
@@ -200,14 +200,14 @@ public class FamilyInviteController {
             fpRepo.save(fp);
         });
 
-        String description = note != null && !note.isEmpty() ? note : "Allowance";
+        String description = note != null && !note.isEmpty() ? note : "Argent de poche";
 
         Transaction debit = new Transaction();
         debit.setUser(fromUser);
         debit.setType("EXPENSE");
         debit.setCategory("ALLOWANCE");
         debit.setAmount(amount);
-        debit.setDescription(description + " to " + toUser.getFirstName());
+        debit.setDescription(description + " pour " + toUser.getFirstName());
         debit.setDate(LocalDate.now());
         txRepo.save(debit);
 
@@ -218,12 +218,12 @@ public class FamilyInviteController {
         credit.setAmount(amount);
         credit.setDescription(note != null && !note.isEmpty()
                 ? note
-                : "Allowance from " + fromUser.getFirstName());
+                : "Argent de poche de " + fromUser.getFirstName());
         credit.setDate(LocalDate.now());
         txRepo.save(credit);
 
         return Map.of("success", true,
-                "message", "Allowance sent to " + toUser.getFirstName() + " successfully!");
+                "message", "Argent de poche envoyé à " + toUser.getFirstName() + " avec succès !");
     }
 
     private String generateUniqueCode() {
@@ -236,6 +236,6 @@ public class FamilyInviteController {
             );
             if (count == null || count == 0) return code;
         }
-        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Could not generate unique code");
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Impossible de générer un code unique");
     }
 }
