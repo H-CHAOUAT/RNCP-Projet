@@ -7,6 +7,9 @@ import com.finfamplan.backend.repository.FinancialProfileRepository;
 import com.finfamplan.backend.repository.FamilyGroupRepository;
 import com.finfamplan.backend.repository.TransactionRepository;
 import com.finfamplan.backend.repository.UserRepository;
+import com.finfamplan.backend.model.FinancialProfile;
+import com.finfamplan.backend.security.AccessGuard;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +30,7 @@ public class FamilyInviteController {
     private final FinancialProfileRepository fpRepo;
     private final TransactionRepository txRepo;
     private final JdbcTemplate jdbc;
+    private final AccessGuard accessGuard;
 
     private static final String CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -35,19 +39,22 @@ public class FamilyInviteController {
                                   FamilyGroupRepository familyGroupRepository,
                                   FinancialProfileRepository fpRepo,
                                   TransactionRepository txRepo,
-                                  JdbcTemplate jdbc) {
+                                  JdbcTemplate jdbc,
+                                  AccessGuard accessGuard) {
         this.userRepository = userRepository;
         this.familyGroupRepository = familyGroupRepository;
         this.fpRepo = fpRepo;
         this.txRepo = txRepo;
         this.jdbc = jdbc;
+        this.accessGuard = accessGuard;
     }
 
     @PostMapping("/invite-code/generate")
-    public Map<String, Object> generateCode(@RequestBody Map<String, Object> body) {
+    public Map<String, Object> generateCode(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         if (body.get("userId") == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId is required");
         Long userId = Long.valueOf(body.get("userId").toString());
+        accessGuard.requireSelf(request, userId);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -72,12 +79,13 @@ public class FamilyInviteController {
     }
 
     @PostMapping("/invite-code/join")
-    public Map<String, Object> joinWithCode(@RequestBody Map<String, Object> body) {
+    public Map<String, Object> joinWithCode(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         if (body.get("userId") == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId is required");
         if (body.get("code") == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "code is required");
         Long userId = Long.valueOf(body.get("userId").toString());
+        accessGuard.requireSelf(request, userId);
         String code = body.get("code").toString().trim().toUpperCase();
         String roleStr = body.getOrDefault("role", "CHILD").toString().toUpperCase();
 
@@ -125,10 +133,11 @@ public class FamilyInviteController {
     }
 
     @PostMapping("/create-group")
-    public Map<String, Object> createGroup(@RequestBody Map<String, Object> body) {
+    public Map<String, Object> createGroup(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         if (body.get("userId") == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "userId is required");
         Long userId = Long.valueOf(body.get("userId").toString());
+        accessGuard.requireSelf(request, userId);
         String name = body.getOrDefault("name", "My Family").toString().trim();
 
         User user = userRepository.findById(userId)
@@ -150,12 +159,13 @@ public class FamilyInviteController {
     }
 
     @PostMapping("/transfer")
-    public Map<String, Object> transfer(@RequestBody Map<String, Object> body) {
+    public Map<String, Object> transfer(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         if (body.get("fromUserId") == null || body.get("toUserId") == null || body.get("amount") == null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fromUserId, toUserId and amount are required");
 
         Long fromUserId = Long.valueOf(body.get("fromUserId").toString());
         Long toUserId   = Long.valueOf(body.get("toUserId").toString());
+        accessGuard.requireSelf(request, fromUserId);
         BigDecimal amount = new BigDecimal(body.get("amount").toString());
         String note = body.get("note") != null ? body.get("note").toString().trim() : null;
 
@@ -175,22 +185,42 @@ public class FamilyInviteController {
                 || !fromUser.getFamilyGroup().getId().equals(toUser.getFamilyGroup().getId()))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Both users must be in the same family group");
 
+        FinancialProfile fromFp = fpRepo.findByUser_UserId(fromUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sender has no financial profile"));
+        BigDecimal fromBalance = fromFp.getCurrentBalance() != null ? fromFp.getCurrentBalance() : BigDecimal.ZERO;
+        if (fromBalance.compareTo(amount) < 0)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Insufficient balance");
+
+        fromFp.setCurrentBalance(fromBalance.subtract(amount));
+        fpRepo.save(fromFp);
+
         fpRepo.findByUser_UserId(toUserId).ifPresent(fp -> {
             BigDecimal bal = fp.getCurrentBalance() != null ? fp.getCurrentBalance() : BigDecimal.ZERO;
             fp.setCurrentBalance(bal.add(amount));
             fpRepo.save(fp);
         });
 
-        Transaction tx = new Transaction();
-        tx.setUser(toUser);
-        tx.setType("INCOME");
-        tx.setCategory("ALLOWANCE");
-        tx.setAmount(amount);
-        tx.setDescription(note != null && !note.isEmpty()
+        String description = note != null && !note.isEmpty() ? note : "Allowance";
+
+        Transaction debit = new Transaction();
+        debit.setUser(fromUser);
+        debit.setType("EXPENSE");
+        debit.setCategory("ALLOWANCE");
+        debit.setAmount(amount);
+        debit.setDescription(description + " to " + toUser.getFirstName());
+        debit.setDate(LocalDate.now());
+        txRepo.save(debit);
+
+        Transaction credit = new Transaction();
+        credit.setUser(toUser);
+        credit.setType("INCOME");
+        credit.setCategory("ALLOWANCE");
+        credit.setAmount(amount);
+        credit.setDescription(note != null && !note.isEmpty()
                 ? note
                 : "Allowance from " + fromUser.getFirstName());
-        tx.setDate(LocalDate.now());
-        txRepo.save(tx);
+        credit.setDate(LocalDate.now());
+        txRepo.save(credit);
 
         return Map.of("success", true,
                 "message", "Allowance sent to " + toUser.getFirstName() + " successfully!");
