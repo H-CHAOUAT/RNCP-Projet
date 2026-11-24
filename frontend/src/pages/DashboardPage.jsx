@@ -391,7 +391,7 @@ export default function DashboardPage() {
                 <BottomCard
                     title="Analysis"
                     icon="📊"
-                    content={`Savings rate: ${monthlyIncome > 0 ? ((available / monthlyIncome) * 100).toFixed(1) : 0}% of income`}
+                    content={`Savings rate: ${monthlyIncome > 0 ? (((monthlyIncome - fixedExpensesTotal) / monthlyIncome) * 100).toFixed(1) : 0}% of income`}
                     action="See insights →"
                     onClick={() => navigate("/financial?tab=analysis")}
                 />
