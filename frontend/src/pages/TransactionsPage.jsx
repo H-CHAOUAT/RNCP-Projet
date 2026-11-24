@@ -42,7 +42,9 @@ export default function TransactionsPage() {
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [filter, setFilter] = useState("all");
-    const [monthFilter, setMonthFilter] = useState(""); // "" = all months, else "2026-11"
+    const [monthPart, setMonthPart] = useState(""); // "" or "01".."12"
+    const [yearPart, setYearPart] = useState("");   // "" or e.g. "2026"
+    const monthFilter = monthPart && yearPart ? `${yearPart}-${monthPart}` : "";
     const [categoryFilter, setCategoryFilter] = useState(""); // "" = all categories
     const [currency, setCurrency] = useState("EUR");
     const [saving, setSaving] = useState(false);
@@ -137,9 +139,6 @@ export default function TransactionsPage() {
     const totalExpense = transactions.filter(t => t.type === "EXPENSE").reduce((s, t) => s + Number(t.amount ?? 0), 0);
     const net = totalIncome - totalExpense;
 
-    const [selectedYear, selectedMonth] = monthFilter ? monthFilter.split("-") : ["", ""];
-    const buildMonthFilter = (month, year) => (month && year ? `${year}-${month}` : "");
-
     return (
         <div className="mx-auto max-w-5xl space-y-6">
             <div className="flex items-start justify-between gap-4">
@@ -224,8 +223,8 @@ export default function TransactionsPage() {
                     <div className="flex gap-1.5">
                         <select
                             className="rounded-lg border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine"
-                            value={selectedMonth}
-                            onChange={e => setMonthFilter(buildMonthFilter(e.target.value, selectedYear))}
+                            value={monthPart}
+                            onChange={e => setMonthPart(e.target.value)}
                         >
                             <option value="">Mois</option>
                             {MONTH_NAMES.map((name, i) => (
@@ -234,8 +233,8 @@ export default function TransactionsPage() {
                         </select>
                         <select
                             className="rounded-lg border px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine"
-                            value={selectedYear}
-                            onChange={e => setMonthFilter(buildMonthFilter(selectedMonth, e.target.value))}
+                            value={yearPart}
+                            onChange={e => setYearPart(e.target.value)}
                         >
                             <option value="">Année</option>
                             {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
@@ -252,8 +251,8 @@ export default function TransactionsPage() {
                         ))}
                     </select>
                 </div>
-                {(monthFilter || categoryFilter) && (
-                    <button className="text-sm text-wine hover:underline pb-1.5" onClick={() => { setMonthFilter(""); setCategoryFilter(""); }}>
+                {(monthPart || yearPart || categoryFilter) && (
+                    <button className="text-sm text-wine hover:underline pb-1.5" onClick={() => { setMonthPart(""); setYearPart(""); setCategoryFilter(""); }}>
                         Réinitialiser
                     </button>
                 )}
