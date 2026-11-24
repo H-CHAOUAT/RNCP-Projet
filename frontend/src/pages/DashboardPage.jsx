@@ -33,6 +33,13 @@ export default function DashboardPage() {
     const [confirmingSalary, setConfirmingSalary] = useState(false);
     const [goalIdx, setGoalIdx] = useState(0);
 
+    // Step shown right after confirming salary: optionally fund goals with the
+    // balance that was just topped up.
+    const [contributeStep, setContributeStep] = useState(false);
+    const [contribAmounts, setContribAmounts] = useState({}); // goalId -> string
+    const [contributing, setContributing] = useState(false);
+    const [contribError, setContribError] = useState("");
+
     useEffect(() => {
         if (!userId) {
             setLoading(false);
@@ -61,6 +68,14 @@ export default function DashboardPage() {
             if (res.ok) {
                 setFinancial(await res.json());
                 setSalaryPending(false);
+
+                const prefill = {};
+                goals.forEach((g) => {
+                    prefill[g.id] = g.planAmountPerPayday != null ? String(g.planAmountPerPayday) : "";
+                });
+                setContribAmounts(prefill);
+                setContribError("");
+                setContributeStep(true);
             }
         } catch {} finally {
             setConfirmingSalary(false);
@@ -70,6 +85,66 @@ export default function DashboardPage() {
     const handleDismissSalary = async () => {
         setSalaryPending(false);
         await apiFetch(`/api/financial/${userId}/dismiss-salary`, { method: "POST" }).catch(() => {});
+    };
+
+    const refreshFinancialAndGoals = async () => {
+        const [fin, g] = await Promise.all([
+            apiFetch(`/api/financial/${userId}`).then((r) => (r.ok ? r.json() : null)),
+            apiFetch(`/api/goals/user/${userId}`).then((r) => (r.ok ? r.json() : [])),
+        ]);
+        setFinancial(fin);
+        setGoals(g || []);
+    };
+
+    const finishContributeStep = () => {
+        setContributeStep(false);
+        setContribAmounts({});
+        setContributing(false);
+        setContribError("");
+    };
+
+    const handleConfirmContributions = async () => {
+        const entries = Object.entries(contribAmounts).filter(([, v]) => Number(v) > 0);
+        if (entries.length === 0) {
+            finishContributeStep();
+            return;
+        }
+
+        setContributing(true);
+        setContribError("");
+        const results = [];
+
+        for (const [goalId, amountStr] of entries) {
+            const amount = Number(amountStr);
+            try {
+                const res = await apiFetch(`/api/goals/${goalId}/contribute/user/${userId}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ amount }),
+                });
+                if (!res.ok) {
+                    results.push({ goalId, ok: false, error: await res.text() });
+                    break; // stop at the first failure — further calls would likely fail too
+                }
+                results.push({ goalId, ok: true });
+            } catch {
+                results.push({ goalId, ok: false, error: "Network error" });
+                break;
+            }
+        }
+
+        setContributing(false);
+        await refreshFinancialAndGoals(); // reflect server truth, whatever succeeded
+
+        if (results.every((r) => r.ok)) {
+            finishContributeStep();
+        } else {
+            const okCount = results.filter((r) => r.ok).length;
+            const lastError = results[results.length - 1]?.error || "Unknown error";
+            setContribError(
+                `Contributed to ${okCount} of ${entries.length} goal${entries.length !== 1 ? "s" : ""} before an error occurred: ${lastError}. Your balance and goals reflect what succeeded.`
+            );
+        }
     };
 
     const currency = financial?.currency ?? "EUR";
@@ -86,6 +161,9 @@ export default function DashboardPage() {
         currentGoal?.targetAmount > 0
             ? Math.min(100, (Number(currentGoal.currentAmount ?? 0) / currentGoal.targetAmount) * 100)
             : 0;
+
+    const contribTotal = Object.values(contribAmounts).reduce((s, v) => s + (Number(v) || 0), 0);
+    const contribOverBalance = contribTotal > Number(financial?.currentBalance ?? 0);
 
     const overallGoalPct =
         goals.length > 0
@@ -319,7 +397,7 @@ export default function DashboardPage() {
                 />
             </div>
 
-            {salaryPending && (
+            {salaryPending && !contributeStep && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                     <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl text-left">
                         <div className="mb-3 text-4xl">💰</div>
@@ -360,6 +438,83 @@ export default function DashboardPage() {
                         <p className="mt-3 text-xs text-dark/30">
                             Selecting "Not yet" will remind you again tomorrow.
                         </p>
+                    </div>
+                </div>
+            )}
+
+            {contributeStep && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl text-left">
+                        <div className="mb-3 text-4xl">🎯</div>
+                        <h3 className="mb-2 text-xl font-semibold text-dark">Fund your goals?</h3>
+                        <p className="mb-4 text-sm text-dark/60">
+                            Your salary is in. Allocate some of it to your goals now, or skip for this time.
+                        </p>
+
+                        {contribError && (
+                            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                                {contribError}
+                            </div>
+                        )}
+
+                        {goals.length === 0 ? (
+                            <p className="mb-5 text-sm text-dark/60">You don't have any goals yet.</p>
+                        ) : (
+                            <div className="mb-4 space-y-3">
+                                {goals.map((g) => (
+                                    <div key={g.id} className="flex items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <div className="truncate text-sm font-medium text-dark">{g.title}</div>
+                                            <div className="text-xs text-dark/40">
+                                                {money(g.currentAmount, currency)} / {money(g.targetAmount, currency)}
+                                            </div>
+                                        </div>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="0.01"
+                                            className="w-28 rounded-lg border border-slate-300 px-2 py-1 text-right text-sm focus:outline-none focus:ring-2 focus:ring-wine"
+                                            value={contribAmounts[g.id] ?? ""}
+                                            onChange={(e) =>
+                                                setContribAmounts((prev) => ({ ...prev, [g.id]: e.target.value }))
+                                            }
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                ))}
+
+                                <div
+                                    className={`flex justify-between border-t pt-2 text-xs ${
+                                        contribOverBalance ? "text-red-600" : "text-dark/40"
+                                    }`}
+                                >
+                                    <span>Total to allocate</span>
+                                    <span className="font-medium">
+                                        {money(contribTotal, currency)} / {money(financial?.currentBalance ?? 0, currency)} available
+                                    </span>
+                                </div>
+                                {contribOverBalance && (
+                                    <p className="text-xs text-red-600">This is more than your current balance.</p>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleConfirmContributions}
+                                disabled={contributing || contribOverBalance || goals.length === 0}
+                                className="flex-1 rounded-lg bg-wine py-3 font-semibold text-white transition hover:bg-wineDark disabled:opacity-50"
+                            >
+                                {contributing ? "Processing..." : "Confirm contributions"}
+                            </button>
+                            <button
+                                onClick={finishContributeStep}
+                                disabled={contributing}
+                                className="flex-1 rounded-lg border border-slate-300 py-3 font-semibold text-dark transition hover:bg-slate-50 disabled:opacity-50"
+                            >
+                                Skip
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}
