@@ -15,6 +15,10 @@ public class GoalViewDto {
     public LocalDate deadline;
     public LocalDateTime createdAt;
 
+    public String planLabel;
+    public BigDecimal planAmountPerPayday;
+    public BigDecimal remainingAmount;
+
     public Long userId;
     public Long createdByUserId;
     public String createdByName;

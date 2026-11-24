@@ -1,8 +1,17 @@
 import ProgressBar from "./ProgressBar";
 
-export default function GoalCard({ goal }) {
+const money = (n, currency = "EUR") => {
+    try {
+        return new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(Number(n ?? 0));
+    } catch {
+        return `${Number(n ?? 0).toFixed(2)} ${currency}`;
+    }
+};
+
+export default function GoalCard({ goal, currency = "EUR" }) {
     const pct =
         goal.targetAmount > 0 ? Math.min(100, (goal.currentAmount / goal.targetAmount) * 100) : 0;
+    const remaining = goal.remainingAmount ?? Math.max(0, goal.targetAmount - goal.currentAmount);
 
     return (
         <div className="rounded-lg border p-4">
@@ -17,7 +26,14 @@ export default function GoalCard({ goal }) {
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
                         {goal.deadline ? <span>Deadline: {goal.deadline}</span> : null}
                         {goal.createdByName ? <span>Created by: {goal.createdByName}</span> : null}
+                        <span>{money(remaining, currency)} left to save</span>
                     </div>
+
+                    {goal.planLabel ? (
+                        <div className="mt-1 text-xs font-medium text-wine">
+                            Plan: {goal.planLabel} — {money(goal.planAmountPerPayday, currency)}/payday
+                        </div>
+                    ) : null}
                 </div>
 
                 <div className="text-sm text-slate-700 text-right">

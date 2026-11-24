@@ -32,6 +32,15 @@ public class Goal {
 
     private LocalDate deadline;
 
+    // Savings plan chosen at creation (from GoalController.suggestions()): which
+    // of On time / Aggressive / Relaxed was picked, and the amount per payday.
+    // Null until the user picks a plan (optional step).
+    @Column(name = "plan_label")
+    private String planLabel;
+
+    @Column(name = "plan_amount_per_payday")
+    private BigDecimal planAmountPerPayday;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

@@ -101,6 +101,29 @@ public class GoalController {
         goalRepo.delete(goal);
     }
 
+    @PatchMapping("/{goalId}/plan/user/{userId}")
+    public GoalViewDto setPlan(
+            @PathVariable Long goalId,
+            @PathVariable Long userId,
+            @RequestBody @Valid SetGoalPlanRequest req,
+            HttpServletRequest request
+    ) {
+        accessGuard.requireSelf(request, userId);
+
+        Goal goal = goalRepo.findById(goalId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Goal not found"));
+
+        if (!goal.getUser().getUserId().equals(userId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your goal");
+        }
+
+        goal.setPlanLabel(req.label);
+        goal.setPlanAmountPerPayday(req.amountPerPayday);
+        goalRepo.save(goal);
+
+        return toViewDto(goal);
+    }
+
     @PostMapping("/{goalId}/contribute/user/{userId}")
     @Transactional
     public GoalViewDto contribute(
@@ -231,6 +254,10 @@ public class GoalController {
         dto.targetAmount = g.getTargetAmount();
         dto.currentAmount = g.getCurrentAmount();
         dto.deadline = g.getDeadline();
+
+        dto.planLabel = g.getPlanLabel();
+        dto.planAmountPerPayday = g.getPlanAmountPerPayday();
+        dto.remainingAmount = nz(g.getTargetAmount()).subtract(nz(g.getCurrentAmount())).max(BigDecimal.ZERO);
 
         if (g.getCreatedBy() != null) {
             String fn = g.getCreatedBy().getFirstName() != null ? g.getCreatedBy().getFirstName() : "";
