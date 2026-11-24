@@ -20,8 +20,8 @@ export default function Sidebar({ open, onClose }) {
 
   const handleLogout = () => {
     localStorage.removeItem("user");
-    localStorage.removeItem("token");
-    navigate("/");
+    sessionStorage.removeItem("token");
+    navigate("/login");
   };
 
   const linkClass = ({ isActive }) => `${base} ${isActive ? active : inactive}`;
