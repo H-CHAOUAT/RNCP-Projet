@@ -4,6 +4,7 @@ import FinancialForm from "../components/organisms/financial/FinancialForm";
 import GoalsList from "../components/organisms/goals/GoalsList";
 import CreateGoalModal from "../components/organisms/goals/CreateGoalModal";
 import { apiFetch } from "../api/apiFetch";
+import { categoryLabel } from "../constants/labels";
 
 function AnalysisTab({ userId }) {
     const [financial, setFinancial] = useState(null);
@@ -30,7 +31,7 @@ function AnalysisTab({ userId }) {
     }, [userId]);
 
     if (loading) {
-        return <div className="rounded-xl border bg-white p-6 text-dark/40">Loading analysis...</div>;
+        return <div className="rounded-xl border bg-white p-6 text-dark/40">Chargement de l'analyse...</div>;
     }
 
     const currency = financial?.currency ?? "EUR";
@@ -68,7 +69,7 @@ function AnalysisTab({ userId }) {
         <div className="space-y-6 text-left">
             <div className="flex justify-end">
                 <div className="flex overflow-hidden rounded-lg border bg-white text-sm">
-                    {[["month", "This month"], ["3months", "3 months"]].map(([val, label]) => (
+                    {[["month", "Ce mois-ci"], ["3months", "3 mois"]].map(([val, label]) => (
                         <button
                             key={val}
                             onClick={() => setPeriod(val)}
@@ -87,25 +88,25 @@ function AnalysisTab({ userId }) {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 {[
                     {
-                        label: "Monthly income",
+                        label: "Revenu mensuel",
                         value: fmt(income),
-                        sub: "Before expenses",
+                        sub: "Avant dépenses",
                         bg: "bg-green-50 border-green-200",
                         text: "text-green-900",
                         sub2: "text-green-600",
                     },
                     {
-                        label: "Total expenses",
+                        label: "Dépenses totales",
                         value: fmt(totalExpenses),
-                        sub: `${expenses.length} categories`,
+                        sub: `${expenses.length} catégories`,
                         bg: "bg-red-50 border-red-200",
                         text: "text-red-900",
                         sub2: "text-red-600",
                     },
                     {
-                        label: "Available to save",
+                        label: "Disponible à épargner",
                         value: fmt(available),
-                        sub: `${savingsRate}% savings rate`,
+                        sub: `Taux d'épargne de ${savingsRate} %`,
                         bg:
                             available >= 0
                                 ? "bg-blue-50 border-blue-200"
@@ -123,11 +124,11 @@ function AnalysisTab({ userId }) {
             </div>
 
             <div className="rounded-xl border bg-white p-6 text-left">
-                <h3 className="mb-4 font-semibold text-dark">Expense breakdown</h3>
+                <h3 className="mb-4 font-semibold text-dark">Répartition des dépenses</h3>
 
                 {expenses.length === 0 ? (
                     <p className="text-sm text-dark/40">
-                        No expenses added yet — go to the Expenses tab to add them.
+                        Aucune dépense ajoutée pour l'instant — allez dans l'onglet Dépenses pour en ajouter.
                     </p>
                 ) : (
                     <div className="space-y-4">
@@ -147,12 +148,12 @@ function AnalysisTab({ userId }) {
                                     <div key={i} className="space-y-1">
                                         <div className="flex items-center justify-between text-sm">
                                             <span className="font-medium text-slate-800">
-                                                {ICONS[e.category] ?? "📦"} {e.category}
+                                                {ICONS[e.category] ?? "📦"} {categoryLabel(e.category)}
                                             </span>
                                             <span className="text-slate-700">
                                                 {fmt(e.amount)}{" "}
                                                 <span className="text-xs text-slate-400">
-                                                    ({ofIncome}% of income)
+                                                    ({ofIncome} % du revenu)
                                                 </span>
                                             </span>
                                         </div>
@@ -167,13 +168,13 @@ function AnalysisTab({ userId }) {
                                                 <span>
                                                     −10% →{" "}
                                                     <strong className="text-green-700">
-                                                        +{fmt(Number(e.amount) * 0.1)}/mo
+                                                        +{fmt(Number(e.amount) * 0.1)}/mois
                                                     </strong>
                                                 </span>
                                                 <span>
                                                     −20% →{" "}
                                                     <strong className="text-green-700">
-                                                        +{fmt(Number(e.amount) * 0.2)}/mo
+                                                        +{fmt(Number(e.amount) * 0.2)}/mois
                                                     </strong>
                                                 </span>
                                             </div>
@@ -187,7 +188,7 @@ function AnalysisTab({ userId }) {
 
             {activeGoals.length > 0 && (
                 <div className="rounded-xl border bg-white p-6 text-left">
-                    <h3 className="mb-4 font-semibold text-dark">Goal recommendations</h3>
+                    <h3 className="mb-4 font-semibold text-dark">Recommandations pour vos objectifs</h3>
 
                     <div className="space-y-4">
                         {activeGoals.map((g) => {
@@ -223,8 +224,8 @@ function AnalysisTab({ userId }) {
                                     </div>
                                     {needed && (
                                         <div className="text-xs text-dark/50">
-                                            Save <strong className="text-wine">{fmt(needed)}/month</strong>{" "}
-                                            over {months} months to reach deadline {g.deadline}
+                                            Épargnez <strong className="text-wine">{fmt(needed)}/mois</strong>{" "}
+                                            pendant {months} mois pour atteindre l'échéance du {g.deadline}
                                         </div>
                                     )}
                                     {needed && (
@@ -234,12 +235,12 @@ function AnalysisTab({ userId }) {
                                             }`}
                                         >
                                             {canAfford
-                                                ? `✅ Achievable — ${fmt(
+                                                ? `✅ Atteignable — ${fmt(
                                                     available
-                                                )} available after fixed expenses.`
-                                                : `⚠️ Need ${fmt(
+                                                )} disponibles après les charges fixes.`
+                                                : `⚠️ Il manque ${fmt(
                                                     Number(needed) - available
-                                                )} more/month. Consider reducing expenses above.`}
+                                                )}/mois. Pensez à réduire les dépenses ci-dessus.`}
                                         </div>
                                     )}
                                 </div>
@@ -250,26 +251,26 @@ function AnalysisTab({ userId }) {
             )}
 
             <div className="space-y-1 rounded-xl border bg-white p-5 text-left text-sm text-dark/50">
-                <strong className="block text-dark">Savings insight</strong>
+                <strong className="block text-dark">Analyse de l'épargne</strong>
                 <p>
-                    You spend{" "}
+                    Vous dépensez{" "}
                     <strong>
-                        {income > 0 ? ((totalExpenses / income) * 100).toFixed(1) : 0}%
+                        {income > 0 ? ((totalExpenses / income) * 100).toFixed(1) : 0} %
                     </strong>{" "}
-                    of income on fixed costs.
+                    de votre revenu en charges fixes.
                 </p>
                 {savingsRate < 10 && (
                     <p className="text-amber-700">
-                        ⚠️ Savings rate below 10% — review your biggest expenses.
+                        ⚠️ Taux d'épargne inférieur à 10 % — revoyez vos plus grosses dépenses.
                     </p>
                 )}
                 {savingsRate >= 10 && savingsRate < 20 && (
                     <p className="text-blue-700">
-                        💡 Good start — aim for 20%+ for solid financial health.
+                        💡 Bon début — visez 20 % ou plus pour une santé financière solide.
                     </p>
                 )}
                 {savingsRate >= 20 && (
-                    <p className="text-green-700">✅ Great savings rate. Keep it up!</p>
+                    <p className="text-green-700">✅ Excellent taux d'épargne. Continuez ainsi !</p>
                 )}
             </div>
         </div>
@@ -303,9 +304,9 @@ function GoalsTab({ userId, openModalImmediately }) {
         <div className="space-y-4 text-left">
             <div className="flex items-center justify-between">
                 <div className="text-left">
-                    <h2 className="text-lg font-semibold text-dark">Savings goals</h2>
+                    <h2 className="text-lg font-semibold text-dark">Objectifs d'épargne</h2>
                     <p className="text-sm text-dark/50">
-                        Set targets and get smart savings suggestions.
+                        Fixez des objectifs et recevez des suggestions d'épargne intelligentes.
                     </p>
                 </div>
 
@@ -313,7 +314,7 @@ function GoalsTab({ userId, openModalImmediately }) {
                     onClick={() => setOpen(true)}
                     className="rounded-lg bg-wine px-4 py-2 text-sm font-medium text-white transition hover:bg-wineDark"
                 >
-                    + New goal
+                    + Nouvel objectif
                 </button>
             </div>
 
@@ -332,7 +333,7 @@ function GoalsTab({ userId, openModalImmediately }) {
     );
 }
 
-const TABS = ["Overview", "Goals", "Expenses", "Analysis"];
+const TABS = ["Vue d'ensemble", "Objectifs", "Dépenses", "Analyse"];
 
 export default function FinancialPage() {
     const location = useLocation();
@@ -342,10 +343,10 @@ export default function FinancialPage() {
         const params = new URLSearchParams(location.search);
         const t = params.get("tab");
 
-        if (!t) return "Overview";
+        if (!t) return "Vue d'ensemble";
 
         const match = TABS.find(x => x.toLowerCase() === t.toLowerCase());
-        return match || "Overview";
+        return match || "Vue d'ensemble";
     };
 
     const [activeTab, setActiveTab] = useState(getTabFromSearch);
@@ -371,9 +372,9 @@ export default function FinancialPage() {
     return (
         <div className="mx-auto max-w-5xl space-y-6 text-left">
             <div className="text-left">
-                <h1 className="text-2xl font-semibold text-dark">Financial profile</h1>
+                <h1 className="text-2xl font-semibold text-dark">Profil financier</h1>
                 <p className="mt-1 text-dark/50">
-                    Manage your income, fixed expenses, goals and spending analysis.
+                    Gérez vos revenus, charges fixes, objectifs et l'analyse de vos dépenses.
                 </p>
             </div>
 
@@ -395,12 +396,12 @@ export default function FinancialPage() {
                 </nav>
             </div>
 
-            {activeTab === "Overview" && <FinancialForm />}
-            {activeTab === "Goals" && (
+            {activeTab === "Vue d'ensemble" && <FinancialForm />}
+            {activeTab === "Objectifs" && (
                 <GoalsTab userId={userId} openModalImmediately={openModal} />
             )}
-            {activeTab === "Expenses" && <FinancialForm />}
-            {activeTab === "Analysis" && <AnalysisTab userId={userId} />}
+            {activeTab === "Dépenses" && <FinancialForm />}
+            {activeTab === "Analyse" && <AnalysisTab userId={userId} />}
         </div>
     );
 }

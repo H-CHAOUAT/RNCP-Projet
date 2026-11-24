@@ -10,7 +10,7 @@ export default function PreferencesTab() {
 
     const [prefs, setPrefs] = useState({
         currency: "EUR",
-        language: "EN", // UI is English for now
+        language: "FR", // UI is French
         timezone: detectedTimezone,
     });
 
@@ -35,24 +35,24 @@ export default function PreferencesTab() {
 
     const handleSave = () => {
         localStorage.setItem("preferences", JSON.stringify(prefs));
-        alert("✅ Preferences saved (local only for now).");
+        alert("✅ Préférences enregistrées (stockage local pour l'instant).");
     };
 
     return (
         <div className="rounded-xl border bg-white p-5">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-900">Preferences</h2>
+                    <h2 className="text-lg font-semibold text-slate-900">Préférences</h2>
                     <p className="mt-1 text-sm text-slate-600">
-                        Currency can be chosen. Timezone is auto-detected. Language is English for now.
+                        La devise peut être choisie. Le fuseau horaire est détecté automatiquement.
                     </p>
                 </div>
 
-                <Button onClick={handleSave}>Save</Button>
+                <Button onClick={handleSave}>Enregistrer</Button>
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
-                <FormField label="Default currency">
+                <FormField label="Devise par défaut">
                     <Select name="currency" value={prefs.currency} onChange={handleChange}>
                         <option value="EUR">EUR</option>
                         <option value="USD">USD</option>
@@ -63,14 +63,14 @@ export default function PreferencesTab() {
                     </Select>
                 </FormField>
 
-                <FormField label="Language">
+                <FormField label="Langue">
                     <Select name="language" value={prefs.language} onChange={handleChange}>
-                        <option value="EN">English (EN)</option>
+                        <option value="FR">Français (FR)</option>
                     </Select>
                 </FormField>
 
                 <div className="md:col-span-2">
-                    <FormField label="Timezone (auto-detected)">
+                    <FormField label="Fuseau horaire (détection automatique)">
                         <Input
                             name="timezone"
                             value={prefs.timezone}

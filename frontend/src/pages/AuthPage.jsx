@@ -17,29 +17,29 @@ export default function AuthPage() {
                 </div>
                 <h1 className="text-3xl font-bold mb-3">FinFamPlan</h1>
                 <p className="text-white/70 text-center text-sm leading-relaxed max-w-xs">
-                    Plan together. Grow together.
+                    Planifiez ensemble. Progressez ensemble.
                 </p>
 
                 <div className="mt-12 space-y-4 w-full max-w-xs">
                     <div className="flex items-center gap-3 bg-white/10 rounded-xl p-3">
                         <span className="text-2xl">🎯</span>
                         <div>
-                            <div className="text-sm font-semibold">Savings goals</div>
-                            <div className="text-xs text-white/60">Track your progress together</div>
+                            <div className="text-sm font-semibold">Objectifs d'épargne</div>
+                            <div className="text-xs text-white/60">Suivez vos progrès ensemble</div>
                         </div>
                     </div>
                     <div className="flex items-center gap-3 bg-white/10 rounded-xl p-3">
                         <span className="text-2xl">📊</span>
                         <div>
-                            <div className="text-sm font-semibold">Spending analysis</div>
-                            <div className="text-xs text-white/60">See where your money goes</div>
+                            <div className="text-sm font-semibold">Analyse des dépenses</div>
+                            <div className="text-xs text-white/60">Voyez où va votre argent</div>
                         </div>
                     </div>
                     <div className="flex items-center gap-3 bg-white/10 rounded-xl p-3">
                         <span className="text-2xl">👨‍👩‍👧</span>
                         <div>
-                            <div className="text-sm font-semibold">Shared family space</div>
-                            <div className="text-xs text-white/60">Adult, parent, child</div>
+                            <div className="text-sm font-semibold">Espace familial partagé</div>
+                            <div className="text-xs text-white/60">Adulte, parent, enfant</div>
                         </div>
                     </div>
                 </div>
@@ -54,23 +54,23 @@ export default function AuthPage() {
                         <div className="text-xl font-bold text-dark">FinFamPlan</div>
                     </div>
 
-                    <AuthCard title={isLogin ? "Log In" : "Create Account"}>
+                    <AuthCard title={isLogin ? "Se connecter" : "Créer un compte"}>
                         {isLogin ? <LoginForm /> : <Signup />}
                         <p className="text-center mt-4 text-sm text-dark/60">
                             {isLogin ? (
                                 <>
-                                    Don't have an account?{" "}
+                                    Vous n'avez pas de compte ?{" "}
                                     <button onClick={() => navigate("/signup")}
                                             className="text-wine font-medium hover:text-wineDark hover:underline bg-transparent border-none p-0">
-                                        Sign up
+                                        Créer un compte
                                     </button>
                                 </>
                             ) : (
                                 <>
-                                    Already have an account?{" "}
+                                    Vous avez déjà un compte ?{" "}
                                     <button onClick={() => navigate("/login")}
                                             className="text-wine font-medium hover:text-wineDark hover:underline bg-transparent border-none p-0">
-                                        Sign in
+                                        Se connecter
                                     </button>
                                 </>
                             )}

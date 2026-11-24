@@ -25,7 +25,7 @@ export default function AppLayout() {
     return (
         <div className="min-h-screen bg-cream">
             {isSidebarOpen && (
-                <button aria-label="Close sidebar overlay"
+                <button aria-label="Fermer le menu"
                         className="fixed inset-0 z-40 bg-black/40 md:hidden"
                         onClick={() => setIsSidebarOpen(false)} />
             )}

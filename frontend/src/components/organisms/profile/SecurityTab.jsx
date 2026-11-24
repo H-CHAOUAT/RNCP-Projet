@@ -5,7 +5,7 @@ import FormField from "../../molecules/FormField";
 import { apiFetch } from "../../../api/apiFetch";
 
 export default function SecurityTab() {
-    const lastLogin = localStorage.getItem("lastLogin") || new Date().toLocaleString();
+    const lastLogin = localStorage.getItem("lastLogin") || new Date().toLocaleString("fr-FR");
 
     const [showPasswordForm, setShowPasswordForm] = useState(false);
     const [passwords, setPasswords] = useState({ current: "", newPass: "", confirm: "" });
@@ -24,12 +24,12 @@ export default function SecurityTab() {
 
     const handlePasswordChange = async () => {
         setPwMessage({ type: "", text: "" });
-        if (!passwords.current) { setPwMessage({ type: "error", text: "Enter your current password." }); return; }
-        if (passwords.newPass.length < 8) { setPwMessage({ type: "error", text: "New password must be at least 8 characters." }); return; }
-        if (passwords.newPass !== passwords.confirm) { setPwMessage({ type: "error", text: "Passwords do not match." }); return; }
+        if (!passwords.current) { setPwMessage({ type: "error", text: "Saisissez votre mot de passe actuel." }); return; }
+        if (passwords.newPass.length < 8) { setPwMessage({ type: "error", text: "Le nouveau mot de passe doit contenir au moins 8 caractères." }); return; }
+        if (passwords.newPass !== passwords.confirm) { setPwMessage({ type: "error", text: "Les mots de passe ne correspondent pas." }); return; }
 
         const userId = getUserId();
-        if (!userId) { setPwMessage({ type: "error", text: "No session found. Please login again." }); return; }
+        if (!userId) { setPwMessage({ type: "error", text: "Aucune session trouvée. Veuillez vous reconnecter." }); return; }
 
         setPwSaving(true);
         try {
@@ -43,15 +43,15 @@ export default function SecurityTab() {
             });
 
             if (res.ok) {
-                setPwMessage({ type: "success", text: "Password changed successfully!" });
+                setPwMessage({ type: "success", text: "Mot de passe modifié avec succès !" });
                 setPasswords({ current: "", newPass: "", confirm: "" });
                 setShowPasswordForm(false);
             } else {
                 const text = await res.text();
-                setPwMessage({ type: "error", text: text || "Failed to change password." });
+                setPwMessage({ type: "error", text: text || "Échec de la modification du mot de passe." });
             }
         } catch {
-            setPwMessage({ type: "error", text: "Network error. Please try again." });
+            setPwMessage({ type: "error", text: "Erreur réseau. Veuillez réessayer." });
         } finally {
             setPwSaving(false);
         }
@@ -70,13 +70,13 @@ export default function SecurityTab() {
             });
 
             if (res.ok) {
-                setSessionMessage({ type: "success", text: "All other sessions have been terminated." });
+                setSessionMessage({ type: "success", text: "Toutes les autres sessions ont été fermées." });
                 sessionStorage.removeItem("token");
             } else {
-                setSessionMessage({ type: "error", text: "Failed to terminate sessions." });
+                setSessionMessage({ type: "error", text: "Échec de la fermeture des sessions." });
             }
         } catch {
-            setSessionMessage({ type: "error", text: "Network error." });
+            setSessionMessage({ type: "error", text: "Erreur réseau." });
         } finally {
             setSessionLoading(false);
         }
@@ -84,13 +84,13 @@ export default function SecurityTab() {
 
     return (
         <div className="rounded-xl border bg-white p-6">
-            <h2 className="text-xl font-semibold text-dark">Security</h2>
-            <p className="mt-1 text-sm text-gray-600">Manage your account security.</p>
+            <h2 className="text-xl font-semibold text-dark">Sécurité</h2>
+            <p className="mt-1 text-sm text-gray-600">Gérez la sécurité de votre compte.</p>
 
             <div className="mt-6 space-y-6">
                 <div className="flex items-center justify-between">
                     <div>
-                        <p className="font-medium text-slate-800">Last login</p>
+                        <p className="font-medium text-slate-800">Dernière connexion</p>
                         <p className="text-sm text-gray-500">{lastLogin}</p>
                     </div>
                 </div>
@@ -100,11 +100,11 @@ export default function SecurityTab() {
                 <div>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="font-medium text-slate-800">Password</p>
-                            <p className="text-sm text-gray-500">Change your account password</p>
+                            <p className="font-medium text-slate-800">Mot de passe</p>
+                            <p className="text-sm text-gray-500">Modifiez le mot de passe de votre compte</p>
                         </div>
                         <Button onClick={() => { setShowPasswordForm((v) => !v); setPwMessage({ type: "", text: "" }); }}>
-                            {showPasswordForm ? "Cancel" : "Change password"}
+                            {showPasswordForm ? "Annuler" : "Changer le mot de passe"}
                         </Button>
                     </div>
 
@@ -115,17 +115,17 @@ export default function SecurityTab() {
                                     {pwMessage.text}
                                 </div>
                             )}
-                            <FormField label="Current password">
+                            <FormField label="Mot de passe actuel">
                                 <Input type="password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} placeholder="••••••••" />
                             </FormField>
-                            <FormField label="New password">
-                                <Input type="password" value={passwords.newPass} onChange={(e) => setPasswords({ ...passwords, newPass: e.target.value })} placeholder="Min 8 characters" />
+                            <FormField label="Nouveau mot de passe">
+                                <Input type="password" value={passwords.newPass} onChange={(e) => setPasswords({ ...passwords, newPass: e.target.value })} placeholder="Min. 8 caractères" />
                             </FormField>
-                            <FormField label="Confirm new password">
-                                <Input type="password" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="Repeat new password" />
+                            <FormField label="Confirmer le nouveau mot de passe">
+                                <Input type="password" value={passwords.confirm} onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} placeholder="Répétez le nouveau mot de passe" />
                             </FormField>
                             <Button onClick={handlePasswordChange} disabled={pwSaving} className="w-full">
-                                {pwSaving ? "Saving..." : "Update password"}
+                                {pwSaving ? "Enregistrement..." : "Mettre à jour le mot de passe"}
                             </Button>
                         </div>
                     )}
@@ -136,11 +136,11 @@ export default function SecurityTab() {
                 <div>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="font-medium text-slate-800">Active sessions</p>
-                            <p className="text-sm text-gray-500">Log out from all other devices</p>
+                            <p className="font-medium text-slate-800">Sessions actives</p>
+                            <p className="text-sm text-gray-500">Déconnexion de tous les autres appareils</p>
                         </div>
                         <Button onClick={handleLogoutAll} disabled={sessionLoading}>
-                            {sessionLoading ? "Logging out..." : "Log out all"}
+                            {sessionLoading ? "Déconnexion..." : "Tout déconnecter"}
                         </Button>
                     </div>
                     {sessionMessage.text && (

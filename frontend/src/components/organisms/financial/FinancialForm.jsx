@@ -4,6 +4,7 @@ import Input from "../../atoms/Input";
 import Select from "../../atoms/Select";
 import Button from "../../atoms/Button";
 import { apiFetch } from "../../../api/apiFetch";
+import { categoryLabel } from "../../../constants/labels";
 
 const PRESET_CATEGORIES = ["RENT", "BILLS", "SUBSCRIPTIONS", "GROCERIES", "TRANSPORT", "SAVINGS"];
 
@@ -97,10 +98,10 @@ export default function FinancialForm() {
             if (res.ok) {
                 applyData(await res.json());
             } else {
-                setMessage({ type: "error", text: "Failed to load financial data." });
+                setMessage({ type: "error", text: "Échec du chargement des données financières." });
             }
         } catch {
-            setMessage({ type: "error", text: "Failed to load financial data." });
+            setMessage({ type: "error", text: "Échec du chargement des données financières." });
         } finally {
             setLoading(false);
         }
@@ -168,7 +169,7 @@ export default function FinancialForm() {
             });
 
             if (!res.ok) {
-                setMessage({ type: "error", text: `❌ Save failed: ${await res.text()}` });
+                setMessage({ type: "error", text: `❌ Échec de l'enregistrement : ${await res.text()}` });
                 return;
             }
 
@@ -183,15 +184,15 @@ export default function FinancialForm() {
                         type: "INCOME",
                         category: "SALARY",
                         amount: newIncome,
-                        description: `Monthly salary updated to ${newIncome} ${currency}`,
+                        description: `Salaire mensuel mis à jour à ${newIncome} ${currency}`,
                         date: new Date().toISOString().split("T")[0],
                     }),
                 }).catch(() => {});
             }
 
-            setMessage({ type: "success", text: "✅ Financial info saved!" });
+            setMessage({ type: "success", text: "✅ Informations financières enregistrées !" });
         } catch {
-            setMessage({ type: "error", text: "❌ Save failed." });
+            setMessage({ type: "error", text: "❌ Échec de l'enregistrement." });
         } finally {
             setSaving(false);
         }
@@ -199,14 +200,14 @@ export default function FinancialForm() {
 
     const handleSave = async () => {
         if (!userId) {
-            setMessage({ type: "error", text: "No user session." });
+            setMessage({ type: "error", text: "Aucune session utilisateur." });
             return;
         }
         await doSave(buildPayload());
     };
 
     if (loading) {
-        return <div className="rounded-xl border bg-white p-6 text-gray-500">Loading...</div>;
+        return <div className="rounded-xl border bg-white p-6 text-gray-500">Chargement...</div>;
     }
 
     const total = expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
@@ -227,7 +228,7 @@ export default function FinancialForm() {
                 )}
 
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-4">
-                    <FormField label="Monthly salary">
+                    <FormField label="Salaire mensuel">
                         <Input
                             type="number"
                             value={monthlyIncome}
@@ -236,7 +237,7 @@ export default function FinancialForm() {
                         />
                     </FormField>
 
-                    <FormField label="Currency">
+                    <FormField label="Devise">
                         <Select value={currency} onChange={(e) => setCurrency(e.target.value)}>
                             <option value="EUR">EUR</option>
                             <option value="USD">USD</option>
@@ -245,7 +246,7 @@ export default function FinancialForm() {
                         </Select>
                     </FormField>
 
-                    <FormField label="Current balance">
+                    <FormField label="Solde actuel">
                         <Input
                             type="number"
                             value={currentBalance}
@@ -254,7 +255,7 @@ export default function FinancialForm() {
                         />
                     </FormField>
 
-                    <FormField label="Payday day (1–28)">
+                    <FormField label="Jour de paie (1 à 28)">
                         <Input
                             type="number"
                             value={paydayDay}
@@ -268,23 +269,23 @@ export default function FinancialForm() {
 
                 {lastSalaryApplied && (
                     <p className="text-sm text-slate-600">
-                        Last salary applied: <strong>{fmtDate(lastSalaryApplied)}</strong>
+                        Dernier salaire appliqué : <strong>{fmtDate(lastSalaryApplied)}</strong>
                     </p>
                 )}
 
                 <div>
                     <div className="mb-1 flex items-center justify-between">
                         <h2 className="text-lg font-semibold text-slate-900">
-                            Fixed monthly expenses
+                            Charges mensuelles fixes
                         </h2>
                         <span className="text-sm text-slate-500">
-                            Total: <strong>€{total.toFixed(2)}</strong>
+                            Total : <strong>€{total.toFixed(2)}</strong>
                         </span>
                     </div>
 
                     <p className="mb-4 text-sm text-slate-500">
-                        Each preset category can only appear once.
-                        {allPresetsUsed && " All categories used — add a custom one below."}
+                        Chaque catégorie prédéfinie ne peut apparaître qu'une fois.
+                        {allPresetsUsed && " Toutes les catégories sont utilisées — ajoutez-en une personnalisée ci-dessous."}
                     </p>
 
                     <div className="space-y-3">
@@ -293,14 +294,14 @@ export default function FinancialForm() {
                                 key={idx}
                                 className="grid grid-cols-1 items-end gap-3 md:grid-cols-3"
                             >
-                                <FormField label="Category">
+                                <FormField label="Catégorie">
                                     {row.custom ? (
                                         <Input
                                             value={row.customLabel || ""}
                                             onChange={(e) =>
                                                 updateExpense(idx, "customLabel", e.target.value)
                                             }
-                                            placeholder="e.g. Piano lessons"
+                                            placeholder="ex. Cours de piano"
                                         />
                                     ) : (
                                         <Select
@@ -318,8 +319,8 @@ export default function FinancialForm() {
                                                         value={c}
                                                         disabled={taken}
                                                     >
-                                                        {c}
-                                                        {taken ? " (already added)" : ""}
+                                                        {categoryLabel(c)}
+                                                        {taken ? " (déjà ajoutée)" : ""}
                                                     </option>
                                                 );
                                             })}
@@ -327,7 +328,7 @@ export default function FinancialForm() {
                                     )}
                                 </FormField>
 
-                                <FormField label="Amount">
+                                <FormField label="Montant">
                                     <Input
                                         type="number"
                                         value={row.amount}
@@ -342,7 +343,7 @@ export default function FinancialForm() {
                                 <div className="flex items-end gap-2">
                                     {row.custom && (
                                         <span className="self-center whitespace-nowrap rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700">
-                                            Custom
+                                            Personnalisée
                                         </span>
                                     )}
                                     <Button
@@ -350,7 +351,7 @@ export default function FinancialForm() {
                                         onClick={() => removeExpense(idx)}
                                         className="flex-1 bg-red-50 text-red-700 hover:bg-red-100"
                                     >
-                                        Remove
+                                        Supprimer
                                     </Button>
                                 </div>
                             </div>
@@ -364,7 +365,7 @@ export default function FinancialForm() {
                                 onClick={addPresetExpense}
                                 className="bg-slate-100 text-slate-800 hover:bg-slate-200"
                             >
-                                + Add category
+                                + Ajouter une catégorie
                             </Button>
                         )}
                         <Button
@@ -372,13 +373,13 @@ export default function FinancialForm() {
                             onClick={addCustomExpense}
                             className="bg-purple-50 text-purple-800 hover:bg-purple-100"
                         >
-                            + Add custom expense
+                            + Ajouter une dépense personnalisée
                         </Button>
                     </div>
                 </div>
 
                 <Button onClick={handleSave} disabled={saving} className="w-full">
-                    {saving ? "Saving..." : "Save"}
+                    {saving ? "Enregistrement..." : "Enregistrer"}
                 </Button>
             </div>
 

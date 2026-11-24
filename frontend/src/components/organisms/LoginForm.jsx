@@ -34,10 +34,10 @@ export default function LoginForm() {
                     navigate("/dashboard");
                 }
             } else {
-                setError(data.message || "Invalid email or password.");
+                setError(data.message || "Email ou mot de passe invalide.");
             }
         } catch {
-            setError("Cannot reach server. Please try again.");
+            setError("Impossible de contacter le serveur. Veuillez réessayer.");
         } finally {
             setLoading(false);
         }
@@ -51,18 +51,18 @@ export default function LoginForm() {
                 </div>
             )}
             <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">E-mail</label>
                 <input
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="email@example.com"
+                    placeholder="email@exemple.com"
                     required
                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#72383D]"
                 />
             </div>
             <div className="mb-4">
-                <label className="block text-sm font-medium text-slate-700 mb-1">Password</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Mot de passe</label>
                 <input
                     type="password"
                     value={password}
@@ -73,7 +73,7 @@ export default function LoginForm() {
                 />
             </div>
             <Button type="submit" className="w-full bg-[#72383D] text-white hover:bg-[#5e2d31]" disabled={loading}>
-                {loading ? "Signing in..." : "Sign In"}
+                {loading ? "Connexion..." : "Se connecter"}
             </Button>
         </form>
     );

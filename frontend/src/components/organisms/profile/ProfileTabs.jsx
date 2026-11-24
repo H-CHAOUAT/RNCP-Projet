@@ -1,10 +1,10 @@
 import { NavLink } from "react-router-dom";
 
 const tabs = [
-    { to: "/settings/personal", label: "Personal info" },
-    { to: "/settings/preferences", label: "Preferences" },
-    { to: "/settings/security", label: "Security" },
-    { to: "/settings/family", label: "Family" },
+    { to: "/settings/personal", label: "Infos personnelles" },
+    { to: "/settings/preferences", label: "Préférences" },
+    { to: "/settings/security", label: "Sécurité" },
+    { to: "/settings/family", label: "Famille" },
 ];
 
 export default function ProfileTabs() {

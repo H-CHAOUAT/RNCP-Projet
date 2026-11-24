@@ -60,8 +60,8 @@ export default function BillsPage() {
     };
 
     const handleSave = async () => {
-        if (!form.title.trim()) { setMessage({ type: "error", text: "Enter a bill title." }); return; }
-        if (!form.amount || Number(form.amount) <= 0) { setMessage({ type: "error", text: "Enter a valid amount." }); return; }
+        if (!form.title.trim()) { setMessage({ type: "error", text: "Entrez un titre de facture." }); return; }
+        if (!form.amount || Number(form.amount) <= 0) { setMessage({ type: "error", text: "Entrez un montant valide." }); return; }
         setSaving(true);
         setMessage({ type: "", text: "" });
         try {
@@ -82,13 +82,13 @@ export default function BillsPage() {
                 setForm({ title: "", amount: "", dueDate: "", description: "", paid: false });
                 setShowForm(false);
                 const msg = form.paid
-                    ? `✅ Bill added and paid — ${money(form.amount)} deducted from balance.`
-                    : `✅ Bill added. Balance will be updated when you mark it as paid.`;
+                    ? `✅ Facture ajoutée et payée — ${money(form.amount)} déduits du solde.`
+                    : `✅ Facture ajoutée. Le solde sera mis à jour une fois marquée comme payée.`;
                 setMessage({ type: "success", text: msg });
             } else {
-                setMessage({ type: "error", text: "❌ Failed to save." });
+                setMessage({ type: "error", text: "❌ Échec de l'enregistrement." });
             }
-        } catch { setMessage({ type: "error", text: "❌ Network error." }); }
+        } catch { setMessage({ type: "error", text: "❌ Erreur réseau. Veuillez réessayer." }); }
         finally { setSaving(false); }
     };
 
@@ -107,15 +107,15 @@ export default function BillsPage() {
                 setMessage({
                     type: "success",
                     text: !bill.paid
-                        ? `✅ ${bill.title} marked as paid — ${money(bill.amount)} deducted from your balance.`
-                        : `↩️ ${bill.title} marked as unpaid — ${money(bill.amount)} refunded to your balance.`
+                        ? `✅ ${bill.title} marquée comme payée — ${money(bill.amount)} déduits de votre solde.`
+                        : `↩️ ${bill.title} marquée comme non payée — ${money(bill.amount)} remboursés sur votre solde.`
                 });
             } else {
-                setMessage({ type: "error", text: "❌ Failed to update bill." });
+                setMessage({ type: "error", text: "❌ Échec de la mise à jour de la facture." });
             }
         } catch (e) {
             console.error("toggle paid:", e);
-            setMessage({ type: "error", text: "❌ Network error." });
+            setMessage({ type: "error", text: "❌ Erreur réseau. Veuillez réessayer." });
         } finally {
             setTogglingId(null);
         }
@@ -133,25 +133,25 @@ export default function BillsPage() {
         <div className="mx-auto max-w-4xl space-y-6">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-semibold text-dark">Bills</h1>
-                    <p className="text-sm text-dark/50">Track your upcoming and paid bills.</p>
+                    <h1 className="text-2xl font-semibold text-dark">Factures</h1>
+                    <p className="text-sm text-dark/50">Suivez vos factures à venir et payées.</p>
                 </div>
                 <button className="rounded-lg bg-wine text-white px-4 py-2 text-sm font-medium hover:bg-wineDark transition"
                         onClick={() => { setShowForm((v) => !v); setMessage({ type: "", text: "" }); }}>
-                    {showForm ? "✕ Cancel" : "+ Add bill"}
+                    {showForm ? "✕ Annuler" : "+ Ajouter une facture"}
                 </button>
             </div>
 
             
             {overdueBills.length > 0 && (
                 <div className="rounded-xl border border-red-300 bg-red-50 p-4 space-y-2">
-                    <div className="text-sm font-semibold text-red-800">⚠️ Overdue bills — please mark as paid</div>
+                    <div className="text-sm font-semibold text-red-800">⚠️ Factures en retard — merci de les marquer comme payées</div>
                     {overdueBills.map(b => (
                         <div key={b.id} className="flex items-center justify-between text-sm">
-                            <span className="text-red-700">{b.title} — due {fmtDate(b.dueDate)}</span>
+                            <span className="text-red-700">{b.title} — échéance {fmtDate(b.dueDate)}</span>
                             <button onClick={() => togglePaid(b)}
                                     className="text-xs bg-red-600 text-white px-3 py-1 rounded-lg hover:bg-red-700 transition">
-                                Mark as paid ({money(b.amount)})
+                                Marquer comme payée ({money(b.amount)})
                             </button>
                         </div>
                     ))}
@@ -160,13 +160,13 @@ export default function BillsPage() {
 
             {dueTodayBills.length > 0 && (
                 <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 space-y-2">
-                    <div className="text-sm font-semibold text-amber-800">🔔 Due today — don't forget to pay</div>
+                    <div className="text-sm font-semibold text-amber-800">🔔 Échéance aujourd'hui — n'oubliez pas de payer</div>
                     {dueTodayBills.map(b => (
                         <div key={b.id} className="flex items-center justify-between text-sm">
                             <span className="text-amber-700">{b.title}</span>
                             <button onClick={() => togglePaid(b)}
                                     className="text-xs bg-amber-600 text-white px-3 py-1 rounded-lg hover:bg-amber-700 transition">
-                                Mark as paid ({money(b.amount)})
+                                Marquer comme payée ({money(b.amount)})
                             </button>
                         </div>
                     ))}
@@ -175,7 +175,7 @@ export default function BillsPage() {
 
             {dueSoonBills.length > 0 && (
                 <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
-                    <div className="text-sm font-semibold text-blue-800">📅 Coming up in the next 3 days</div>
+                    <div className="text-sm font-semibold text-blue-800">📅 À venir dans les 3 prochains jours</div>
                     <div className="mt-1 text-xs text-blue-600">
                         {dueSoonBills.map(b => `${b.title} (${fmtDate(b.dueDate)})`).join(" · ")}
                     </div>
@@ -193,8 +193,8 @@ export default function BillsPage() {
             {unpaid.length > 0 && (
                 <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-center justify-between">
                     <div>
-                        <div className="text-sm font-medium text-amber-800">Upcoming bills</div>
-                        <div className="text-xs text-amber-600">{unpaid.length} bill{unpaid.length !== 1 ? "s" : ""} pending · balance will update when paid</div>
+                        <div className="text-sm font-medium text-amber-800">Factures à venir</div>
+                        <div className="text-xs text-amber-600">{unpaid.length} facture{unpaid.length !== 1 ? "s" : ""} en attente · le solde sera mis à jour une fois payées</div>
                     </div>
                     <div className="text-xl font-semibold text-amber-800">{money(totalUnpaid)}</div>
                 </div>
@@ -204,9 +204,9 @@ export default function BillsPage() {
             {showForm && (
                 <div className="rounded-xl border bg-white p-6 space-y-4">
                     <div>
-                        <div className="font-semibold text-dark text-lg">New bill</div>
+                        <div className="font-semibold text-dark text-lg">Nouvelle facture</div>
                         <p className="text-xs text-dark/40 mt-0.5">
-                            Balance is only deducted when you mark a bill as paid.
+                            Le solde n'est déduit que lorsque vous marquez une facture comme payée.
                         </p>
                     </div>
                     {message.text && (
@@ -216,58 +216,58 @@ export default function BillsPage() {
                     )}
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div>
-                            <label className="text-xs font-medium text-dark/60 mb-1 block">Bill title *</label>
+                            <label className="text-xs font-medium text-dark/60 mb-1 block">Titre de la facture *</label>
                             <input className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wine"
                                    value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })}
-                                   placeholder="e.g. Electricity" />
+                                   placeholder="ex. Électricité" />
                         </div>
                         <div>
-                            <label className="text-xs font-medium text-dark/60 mb-1 block">Amount (€) *</label>
+                            <label className="text-xs font-medium text-dark/60 mb-1 block">Montant (€) *</label>
                             <input type="number" min="0"
                                    className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wine"
                                    value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })}
                                    placeholder="0.00" />
                         </div>
                         <div>
-                            <label className="text-xs font-medium text-dark/60 mb-1 block">Due date</label>
+                            <label className="text-xs font-medium text-dark/60 mb-1 block">Date d'échéance</label>
                             <DateInput value={form.dueDate} onChange={(iso) => setForm({ ...form, dueDate: iso })} />
                         </div>
                         <div>
-                            <label className="text-xs font-medium text-dark/60 mb-1 block">Description (optional)</label>
+                            <label className="text-xs font-medium text-dark/60 mb-1 block">Description (facultatif)</label>
                             <input className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wine"
                                    value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })}
-                                   placeholder="Details..." />
+                                   placeholder="Détails..." />
                         </div>
                     </div>
                     <label className="flex items-center gap-2 text-sm text-dark cursor-pointer">
                         <input type="checkbox" checked={form.paid}
                                onChange={(e) => setForm({ ...form, paid: e.target.checked })} className="rounded" />
-                        Already paid (will deduct from balance immediately)
+                        Déjà payée (déduira le solde immédiatement)
                     </label>
                     <button className="rounded-lg bg-wine text-white px-6 py-2 text-sm font-semibold hover:bg-wineDark disabled:opacity-50 transition"
                             onClick={handleSave} disabled={saving}>
-                        {saving ? "Saving..." : "Add bill"}
+                        {saving ? "Enregistrement..." : "Ajouter une facture"}
                     </button>
                 </div>
             )}
 
             
             {loading ? (
-                <div className="rounded-xl border bg-white p-8 text-center text-dark/40">Loading bills...</div>
+                <div className="rounded-xl border bg-white p-8 text-center text-dark/40">Chargement des factures...</div>
             ) : bills.length === 0 ? (
                 <div className="rounded-xl border bg-white p-12 text-center">
                     <div className="text-4xl mb-3">🧾</div>
-                    <p className="text-dark/40">No bills yet.</p>
-                    <button className="mt-2 text-sm text-wine hover:underline" onClick={() => setShowForm(true)}>Add your first bill →</button>
+                    <p className="text-dark/40">Aucune facture pour l'instant.</p>
+                    <button className="mt-2 text-sm text-wine hover:underline" onClick={() => setShowForm(true)}>Ajoutez votre première facture →</button>
                 </div>
             ) : (
                 <div className="space-y-3">
                     {unpaid.length > 0 && <>
-                        <div className="text-xs font-semibold text-dark/40 uppercase tracking-wide">Upcoming</div>
+                        <div className="text-xs font-semibold text-dark/40 uppercase tracking-wide">À venir</div>
                         {unpaid.map((b) => <BillRow key={b.id} bill={b} onToggle={togglePaid} toggling={togglingId === b.id} />)}
                     </>}
                     {paid.length > 0 && <>
-                        <div className="mt-4 text-xs font-semibold text-dark/40 uppercase tracking-wide">Paid</div>
+                        <div className="mt-4 text-xs font-semibold text-dark/40 uppercase tracking-wide">Payées</div>
                         {paid.map((b) => <BillRow key={b.id} bill={b} onToggle={togglePaid} toggling={togglingId === b.id} />)}
                     </>}
                 </div>
@@ -286,7 +286,7 @@ function BillRow({ bill, onToggle, toggling }) {
             <div className="flex items-center gap-3">
                 <button
                     className={`h-5 w-5 rounded-full border-2 flex-shrink-0 transition ${toggling ? "opacity-40 cursor-wait" : ""} ${bill.paid ? "bg-green-500 border-green-500" : "border-slate-300 hover:border-green-400"}`}
-                    onClick={() => onToggle(bill)} disabled={toggling} title={bill.paid ? "Mark unpaid" : "Mark paid"}>
+                    onClick={() => onToggle(bill)} disabled={toggling} title={bill.paid ? "Marquer comme non payée" : "Marquer comme payée"}>
                     {bill.paid && <span className="text-white text-xs flex items-center justify-center h-full w-full leading-none">✓</span>}
                 </button>
                 <div>
@@ -294,11 +294,11 @@ function BillRow({ bill, onToggle, toggling }) {
                     {bill.description && <div className="text-xs text-dark/40">{bill.description}</div>}
                     {bill.dueDate && (
                         <div className={`text-xs mt-0.5 ${overdue ? "text-red-600 font-medium" : today ? "text-amber-600 font-medium" : soon ? "text-blue-600" : "text-dark/40"}`}>
-                            {overdue ? "⚠️ Overdue · " : today ? "🔔 Due today · " : soon ? "📅 Due soon · " : "Due: "}{fmtDate(bill.dueDate)}
+                            {overdue ? "⚠️ En retard · " : today ? "🔔 Échéance aujourd'hui · " : soon ? "📅 Bientôt · " : "Échéance : "}{fmtDate(bill.dueDate)}
                         </div>
                     )}
                     {!bill.paid && (
-                        <div className="text-xs text-dark/30 mt-0.5">Click ○ to mark paid — will deduct {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(bill.amount ?? 0))} from balance</div>
+                        <div className="text-xs text-dark/30 mt-0.5">Cliquez sur ○ pour marquer comme payée — déduira {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(Number(bill.amount ?? 0))} du solde</div>
                     )}
                 </div>
             </div>

@@ -34,7 +34,7 @@ export default function PersonalTab() {
         try {
             const userId = getUserIdFromLocalStorage();
             if (!userId) {
-                setMessage({ type: "error", text: "No user session found. Please log in again." });
+                setMessage({ type: "error", text: "Aucune session utilisateur trouvée. Veuillez vous reconnecter." });
                 setLoading(false);
                 return;
             }
@@ -51,10 +51,10 @@ export default function PersonalTab() {
                     email: userData.email || "",
                 });
             } else {
-                setMessage({ type: "error", text: "Failed to load profile data." });
+                setMessage({ type: "error", text: "Échec du chargement du profil." });
             }
         } catch {
-            setMessage({ type: "error", text: "Error loading profile. Please try again." });
+            setMessage({ type: "error", text: "Erreur lors du chargement du profil. Veuillez réessayer." });
         } finally {
             setLoading(false);
         }
@@ -72,7 +72,7 @@ export default function PersonalTab() {
         try {
             const userId = getUserIdFromLocalStorage();
             if (!userId) {
-                setMessage({ type: "error", text: "No user session found." });
+                setMessage({ type: "error", text: "Aucune session utilisateur trouvée." });
                 setSaving(false);
                 return;
             }
@@ -99,13 +99,13 @@ export default function PersonalTab() {
                     localStorage.setItem("user", JSON.stringify(updatedLocalUser));
                 } catch {}
 
-                setMessage({ type: "success", text: "Profile updated successfully!" });
+                setMessage({ type: "success", text: "Profil mis à jour avec succès !" });
             } else {
                 const errorText = await response.text();
-                setMessage({ type: "error", text: `Failed to update profile: ${errorText}` });
+                setMessage({ type: "error", text: `Échec de la mise à jour du profil : ${errorText}` });
             }
         } catch {
-            setMessage({ type: "error", text: "Error updating profile. Please try again." });
+            setMessage({ type: "error", text: "Erreur lors de la mise à jour du profil. Veuillez réessayer." });
         } finally {
             setSaving(false);
         }
@@ -114,7 +114,7 @@ export default function PersonalTab() {
     if (loading) {
         return (
             <div className="rounded-xl border bg-white p-8 text-left">
-                <p className="text-gray-500">Loading profile...</p>
+                <p className="text-gray-500">Chargement du profil...</p>
             </div>
         );
     }
@@ -123,14 +123,14 @@ export default function PersonalTab() {
         <div className="rounded-xl border bg-white p-6 shadow-sm">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-semibold text-dark">Personal Information</h2>
+                    <h2 className="text-xl font-semibold text-dark">Informations personnelles</h2>
                     <p className="mt-1 text-sm text-gray-600">
-                        Update your name and email.
+                        Mettez à jour votre nom et votre e-mail.
                     </p>
                 </div>
 
                 <Button onClick={handleSave} disabled={saving}>
-                    {saving ? "Saving..." : "Save Changes"}
+                    {saving ? "Enregistrement..." : "Enregistrer les modifications"}
                 </Button>
             </div>
 
@@ -147,32 +147,32 @@ export default function PersonalTab() {
             )}
 
             <div className="mt-6 grid grid-cols-1 gap-5 md:grid-cols-2">
-                <FormField label="First name">
+                <FormField label="Prénom">
                     <Input
                         name="firstName"
                         value={profile.firstName}
                         onChange={handleChange}
-                        placeholder="Enter your first name"
+                        placeholder="Saisissez votre prénom"
                     />
                 </FormField>
 
-                <FormField label="Last name">
+                <FormField label="Nom">
                     <Input
                         name="lastName"
                         value={profile.lastName}
                         onChange={handleChange}
-                        placeholder="Enter your last name"
+                        placeholder="Saisissez votre nom"
                     />
                 </FormField>
 
                 <div className="md:col-span-2">
-                    <FormField label="Email" hint="Used for login and notifications">
+                    <FormField label="E-mail" hint="Utilisé pour la connexion et les notifications">
                         <Input
                             type="email"
                             name="email"
                             value={profile.email}
                             onChange={handleChange}
-                            placeholder="your.email@example.com"
+                            placeholder="votre.email@exemple.com"
                         />
                     </FormField>
                 </div>

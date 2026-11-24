@@ -1,10 +1,10 @@
 import GoalCard from "../../molecules/GoalCard";
 
 export default function GoalsList({ goals, loading }) {
-    if (loading) return <p className="text-dark/50">Loading goals...</p>;
+    if (loading) return <p className="text-dark/50">Chargement des objectifs...</p>;
 
     if (!goals?.length) {
-        return <p className="text-dark/50">No goals yet. Create your first one.</p>;
+        return <p className="text-dark/50">Aucun objectif pour l'instant. Créez le premier.</p>;
     }
 
     return (

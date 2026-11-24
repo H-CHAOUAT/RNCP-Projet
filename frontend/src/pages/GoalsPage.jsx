@@ -44,11 +44,11 @@ export default function GoalsPage() {
         <div className="mx-auto max-w-5xl space-y-6">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-semibold text-slate-900">Goals</h1>
-                    <p className="mt-1 text-slate-600">Create savings goals and track your progress.</p>
+                    <h1 className="text-2xl font-semibold text-slate-900">Objectifs</h1>
+                    <p className="mt-1 text-slate-600">Créez des objectifs d'épargne et suivez votre progression.</p>
                 </div>
                 <Button type="button" onClick={() => setOpen(true)}>
-                    + Create goal
+                    + Créer un objectif
                 </Button>
             </div>
 

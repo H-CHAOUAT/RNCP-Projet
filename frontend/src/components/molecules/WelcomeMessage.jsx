@@ -9,15 +9,15 @@ export default function WelcomeMessage({ userName = "User" }) {
     return (
         <div className="text-center space-y-6 max-w-lg">
             <Heading level="h1" className="text-4xl font-bold text-[#322D29]">
-                Welcome {userName} 👋
+                Bienvenue {userName} 👋
             </Heading>
             <Paragraph>
-                Welcome to <span className="font-semibold">FinFamPlan</span> — your all-in-one space to plan smarter, spend better,
-                and reach your financial goals together.
+                Bienvenue sur <span className="font-semibold">FinFamPlan</span> — votre espace tout-en-un pour planifier plus intelligemment, dépenser mieux,
+                et atteindre vos objectifs financiers ensemble.
             </Paragraph>
             <Paragraph>
-                Whether you're managing finances solo or with your family, FinFamPlan helps you track expenses,
-                build goals, and set budgets that make sense.
+                Que vous gériez vos finances seul ou en famille, FinFamPlan vous aide à suivre vos dépenses,
+                à construire des objectifs et à définir des budgets cohérents.
             </Paragraph>
 
             <div className="flex justify-center gap-4 mt-8">
@@ -25,13 +25,13 @@ export default function WelcomeMessage({ userName = "User" }) {
                     onClick={() => navigate("/dashboard")}
                     className="bg-[#72383D] hover:bg-[#322D29] text-white px-6 py-3 rounded-xl shadow-md transition-all"
                 >
-                    Go to Dashboard
+                    Aller au tableau de bord
                 </Button>
                 <Button
                     onClick={() => navigate("/profile")}
                     className="border-2 border-[#72383D] text-[#72383D] hover:bg-[#72383D] hover:text-white px-6 py-3 rounded-xl transition-all"
                 >
-                    Complete My Profile
+                    Compléter mon profil
                 </Button>
             </div>
         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../api/apiFetch";
+import { categoryLabel } from "../constants/labels";
 
 const money = (n, currency = "EUR") => {
     try {
@@ -128,7 +129,7 @@ export default function DashboardPage() {
                 }
                 results.push({ goalId, ok: true });
             } catch {
-                results.push({ goalId, ok: false, error: "Network error" });
+                results.push({ goalId, ok: false, error: "Erreur réseau" });
                 break;
             }
         }
@@ -140,9 +141,9 @@ export default function DashboardPage() {
             finishContributeStep();
         } else {
             const okCount = results.filter((r) => r.ok).length;
-            const lastError = results[results.length - 1]?.error || "Unknown error";
+            const lastError = results[results.length - 1]?.error || "Erreur inconnue";
             setContribError(
-                `Contributed to ${okCount} of ${entries.length} goal${entries.length !== 1 ? "s" : ""} before an error occurred: ${lastError}. Your balance and goals reflect what succeeded.`
+                `Contribution effectuée pour ${okCount} objectif${okCount !== 1 ? "s" : ""} sur ${entries.length} avant qu'une erreur ne survienne : ${lastError}. Votre solde et vos objectifs reflètent ce qui a réussi.`
             );
         }
     };
@@ -182,7 +183,7 @@ export default function DashboardPage() {
         return (
             <div className="p-8">
                 <div className="rounded-xl border bg-white p-6 text-left">
-                    <p className="text-dark/40">Loading dashboard...</p>
+                    <p className="text-dark/40">Chargement du tableau de bord...</p>
                 </div>
             </div>
         );
@@ -192,10 +193,10 @@ export default function DashboardPage() {
         <div className="space-y-6 p-6 text-left">
             <div className="text-left">
                 <h1 className="text-2xl font-semibold text-dark">
-                    Welcome back{userName ? `, ${userName.split(" ")[0]}` : ""}! 👋
+                    Bon retour{userName ? `, ${userName.split(" ")[0]}` : ""} ! 👋
                 </h1>
                 <p className="mt-1 text-sm text-dark/40">
-                    {new Date().toLocaleDateString("en-GB", {
+                    {new Date().toLocaleDateString("fr-FR", {
                         weekday: "long",
                         year: "numeric",
                         month: "long",
@@ -206,30 +207,30 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
                 <StatCard
-                    label="Total balance"
+                    label="Solde total"
                     value={money(currentBalance, currency)}
                     sub={
                         lastSalaryApplied
-                            ? `Salary applied ${new Date(lastSalaryApplied + "T12:00:00").toLocaleDateString("fr-FR")}`
-                            : "Your real-time balance"
+                            ? `Salaire appliqué le ${new Date(lastSalaryApplied + "T12:00:00").toLocaleDateString("fr-FR")}`
+                            : "Votre solde en temps réel"
                     }
                     color="bg-wine"
                     onClick={() => navigate("/financial?tab=overview")}
                 />
                 <StatCard
-                    label="Monthly expenses"
+                    label="Dépenses mensuelles"
                     value={money(fixedExpensesTotal, currency)}
-                    sub={`${fixedExpenses.length} fixed categories`}
+                    sub={`${fixedExpenses.length} catégories fixes`}
                     color="bg-slate-700"
                     onClick={() => navigate("/financial?tab=expenses")}
                 />
                 <StatCard
-                    label="Available this month"
+                    label="Disponible ce mois-ci"
                     value={money(available, currency)}
                     sub={
                         unpaidBillsTotal > 0
-                            ? `After ${money(unpaidBillsTotal, currency)} unpaid bills`
-                            : "All bills paid ✓"
+                            ? `Après ${money(unpaidBillsTotal, currency)} de factures impayées`
+                            : "Toutes les factures sont payées ✓"
                     }
                     color={available >= 0 ? "bg-emerald-600" : "bg-red-500"}
                     onClick={() => navigate("/financial?tab=analysis")}
@@ -238,7 +239,7 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
                 <div className="rounded-2xl border bg-white p-6 shadow-sm lg:col-span-2 text-left">
-                    <div className="mb-4 text-lg font-semibold text-dark">Spending breakdown</div>
+                    <div className="mb-4 text-lg font-semibold text-dark">Répartition des dépenses</div>
 
                     {fixedExpenses.length ? (
                         <div className="space-y-3">
@@ -250,7 +251,7 @@ export default function DashboardPage() {
                                 return (
                                     <div key={i}>
                                         <div className="mb-1 flex justify-between text-sm">
-                                            <span className="text-dark/70">{e.category}</span>
+                                            <span className="text-dark/70">{categoryLabel(e.category)}</span>
                                             <span className="font-medium text-dark">
                                                 {money(e.amount, currency)}
                                                 <span className="ml-1 text-xs text-dark/40">({pct}%)</span>
@@ -269,29 +270,29 @@ export default function DashboardPage() {
                     ) : (
                         <div className="rounded-xl border border-dashed p-8 text-left text-dark/40">
                             <div className="mb-2 text-3xl">💸</div>
-                            <div>No expenses yet.</div>
+                            <div>Aucune dépense pour l'instant.</div>
                             <button
                                 className="mt-2 text-sm text-wine hover:underline"
                                 onClick={() => navigate("/financial?tab=expenses")}
                             >
-                                Add your expenses →
+                                Ajoutez vos dépenses →
                             </button>
                         </div>
                     )}
 
                     <div className="mt-5 flex flex-wrap gap-2 text-xs text-dark/40">
                         <span className="rounded-full bg-slate-100 px-3 py-1">
-                            Income: <strong>{money(monthlyIncome, currency)}</strong>
+                            Revenus : <strong>{money(monthlyIncome, currency)}</strong>
                         </span>
                         <span className="rounded-full bg-slate-100 px-3 py-1">
-                            Fixed costs: <strong>{money(fixedExpensesTotal, currency)}</strong>
+                            Charges fixes : <strong>{money(fixedExpensesTotal, currency)}</strong>
                         </span>
                         <span
                             className={`rounded-full px-3 py-1 ${
                                 available >= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
                             }`}
                         >
-                            Available: <strong>{money(available, currency)}</strong>
+                            Disponible : <strong>{money(available, currency)}</strong>
                         </span>
                     </div>
                 </div>
@@ -301,15 +302,15 @@ export default function DashboardPage() {
                     onClick={() => navigate("/financial?tab=goals")}
                 >
                     <div className="mb-3 flex items-center justify-between">
-                        <div className="text-lg font-semibold text-dark">🎯 Goals</div>
-                        <div className="text-sm text-dark/40">{overallGoalPct}% overall</div>
+                        <div className="text-lg font-semibold text-dark">🎯 Objectifs</div>
+                        <div className="text-sm text-dark/40">{overallGoalPct} % au global</div>
                     </div>
 
                     {goals.length === 0 ? (
                         <div className="py-6 text-left text-dark/40">
                             <div className="mb-2 text-3xl">🎯</div>
-                            <div className="text-sm">No goals yet.</div>
-                            <div className="mt-1 text-xs text-wine">Click to create one →</div>
+                            <div className="text-sm">Aucun objectif pour l'instant.</div>
+                            <div className="mt-1 text-xs text-wine">Cliquez pour en créer un →</div>
                         </div>
                     ) : (
                         <>
@@ -319,8 +320,8 @@ export default function DashboardPage() {
                                     <div className="text-xs text-dark/40">{currentGoal.description}</div>
                                 )}
                                 <div className="flex justify-between text-xs text-dark/40">
-                                    <span>{money(currentGoal.currentAmount ?? 0, currency)} saved</span>
-                                    <span>Target: {money(currentGoal.targetAmount, currency)}</span>
+                                    <span>{money(currentGoal.currentAmount ?? 0, currency)} épargnés</span>
+                                    <span>Objectif : {money(currentGoal.targetAmount, currency)}</span>
                                 </div>
                                 <div className="h-2 w-full rounded-full bg-slate-100">
                                     <div
@@ -331,7 +332,7 @@ export default function DashboardPage() {
                                 <div className="text-right text-xs text-dark/40">{goalPct.toFixed(0)}%</div>
                                 {currentGoal.deadline && (
                                     <div className="text-xs text-dark/40">
-                                        Deadline: {new Date(currentGoal.deadline + "T12:00:00").toLocaleDateString("fr-FR")}
+                                        Échéance : {new Date(currentGoal.deadline + "T12:00:00").toLocaleDateString("fr-FR")}
                                     </div>
                                 )}
                             </div>
@@ -377,22 +378,22 @@ export default function DashboardPage() {
                 <BottomCard
                     title="Transactions"
                     icon="💳"
-                    content="Track income and expenses"
-                    action="View all →"
+                    content="Suivez vos revenus et dépenses"
+                    action="Voir tout →"
                     onClick={() => navigate("/transactions")}
                 />
                 <BottomCard
-                    title="Bills"
+                    title="Factures"
                     icon="🧾"
-                    content="Manage your recurring bills"
-                    action="View bills →"
+                    content="Gérez vos factures récurrentes"
+                    action="Voir les factures →"
                     onClick={() => navigate("/bills")}
                 />
                 <BottomCard
-                    title="Analysis"
+                    title="Analyse"
                     icon="📊"
-                    content={`Savings rate: ${monthlyIncome > 0 ? (((monthlyIncome - fixedExpensesTotal) / monthlyIncome) * 100).toFixed(1) : 0}% of income`}
-                    action="See insights →"
+                    content={`Taux d'épargne : ${monthlyIncome > 0 ? (((monthlyIncome - fixedExpensesTotal) / monthlyIncome) * 100).toFixed(1) : 0} % du revenu`}
+                    action="Voir les analyses →"
                     onClick={() => navigate("/financial?tab=analysis")}
                 />
             </div>
@@ -401,23 +402,23 @@ export default function DashboardPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                     <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl text-left">
                         <div className="mb-3 text-4xl">💰</div>
-                        <h3 className="mb-2 text-xl font-semibold text-dark">Payday!</h3>
+                        <h3 className="mb-2 text-xl font-semibold text-dark">Jour de paie !</h3>
                         <p className="mb-1 text-sm text-dark/60">
-                            Today is your payday (day {financial?.paydayDay}).
+                            Aujourd'hui est votre jour de paie (le {financial?.paydayDay}).
                         </p>
                         <p className="mb-4 text-sm text-dark/60">
-                            Did you receive your salary of{" "}
-                            <strong className="text-dark">{money(monthlyIncome, currency)}</strong>?
+                            Avez-vous reçu votre salaire de{" "}
+                            <strong className="text-dark">{money(monthlyIncome, currency)}</strong> ?
                         </p>
                         <div className="mb-5 space-y-1 rounded-lg bg-winePale p-3 text-left text-xs text-dark/60">
                             <div>
-                                ✅ Salary <strong>+{money(monthlyIncome, currency)}</strong> added to balance
+                                ✅ Salaire <strong>+{money(monthlyIncome, currency)}</strong> ajouté au solde
                             </div>
                             <div>
-                                ➖ Fixed expenses <strong>-{money(fixedExpensesTotal, currency)}</strong> deducted
+                                ➖ Charges fixes <strong>-{money(fixedExpensesTotal, currency)}</strong> déduites
                             </div>
                             <div className="border-t border-wineLight/30 pt-1 font-medium text-dark">
-                                Net: <strong className="text-emerald-700">+{money(monthlyIncome - fixedExpensesTotal, currency)}</strong>
+                                Solde net : <strong className="text-emerald-700">+{money(monthlyIncome - fixedExpensesTotal, currency)}</strong>
                             </div>
                         </div>
                         <div className="flex gap-3">
@@ -426,17 +427,17 @@ export default function DashboardPage() {
                                 disabled={confirmingSalary}
                                 className="flex-1 rounded-lg bg-wine py-3 font-semibold text-white transition hover:bg-wineDark disabled:opacity-50"
                             >
-                                {confirmingSalary ? "Processing..." : "✅ Yes, I got paid!"}
+                                {confirmingSalary ? "Traitement..." : "✅ Oui, je l'ai reçu !"}
                             </button>
                             <button
                                 onClick={handleDismissSalary}
                                 className="flex-1 rounded-lg border border-slate-300 py-3 font-semibold text-dark transition hover:bg-slate-50"
                             >
-                                Not yet
+                                Pas encore
                             </button>
                         </div>
                         <p className="mt-3 text-xs text-dark/30">
-                            Selecting "Not yet" will remind you again tomorrow.
+                            En sélectionnant "Pas encore", vous serez rappelé demain.
                         </p>
                     </div>
                 </div>
@@ -446,9 +447,9 @@ export default function DashboardPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                     <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl text-left">
                         <div className="mb-3 text-4xl">🎯</div>
-                        <h3 className="mb-2 text-xl font-semibold text-dark">Fund your goals?</h3>
+                        <h3 className="mb-2 text-xl font-semibold text-dark">Alimenter vos objectifs ?</h3>
                         <p className="mb-4 text-sm text-dark/60">
-                            Your salary is in. Allocate some of it to your goals now, or skip for this time.
+                            Votre salaire est arrivé. Allouez-en une partie à vos objectifs maintenant, ou passez cette fois-ci.
                         </p>
 
                         {contribError && (
@@ -458,7 +459,7 @@ export default function DashboardPage() {
                         )}
 
                         {goals.length === 0 ? (
-                            <p className="mb-5 text-sm text-dark/60">You don't have any goals yet.</p>
+                            <p className="mb-5 text-sm text-dark/60">Vous n'avez pas encore d'objectif.</p>
                         ) : (
                             <div className="mb-4 space-y-3">
                                 {goals.map((g) => (
@@ -488,13 +489,13 @@ export default function DashboardPage() {
                                         contribOverBalance ? "text-red-600" : "text-dark/40"
                                     }`}
                                 >
-                                    <span>Total to allocate</span>
+                                    <span>Total à allouer</span>
                                     <span className="font-medium">
-                                        {money(contribTotal, currency)} / {money(financial?.currentBalance ?? 0, currency)} available
+                                        {money(contribTotal, currency)} / {money(financial?.currentBalance ?? 0, currency)} disponibles
                                     </span>
                                 </div>
                                 {contribOverBalance && (
-                                    <p className="text-xs text-red-600">This is more than your current balance.</p>
+                                    <p className="text-xs text-red-600">Ce montant dépasse votre solde actuel.</p>
                                 )}
                             </div>
                         )}
@@ -505,14 +506,14 @@ export default function DashboardPage() {
                                 disabled={contributing || contribOverBalance || goals.length === 0}
                                 className="flex-1 rounded-lg bg-wine py-3 font-semibold text-white transition hover:bg-wineDark disabled:opacity-50"
                             >
-                                {contributing ? "Processing..." : "Confirm contributions"}
+                                {contributing ? "Traitement..." : "Confirmer les contributions"}
                             </button>
                             <button
                                 onClick={finishContributeStep}
                                 disabled={contributing}
                                 className="flex-1 rounded-lg border border-slate-300 py-3 font-semibold text-dark transition hover:bg-slate-50 disabled:opacity-50"
                             >
-                                Skip
+                                Passer
                             </button>
                         </div>
                     </div>

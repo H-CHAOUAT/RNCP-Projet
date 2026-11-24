@@ -10,7 +10,7 @@ const active    = "bg-winePale text-wine font-semibold border-l-2 border-wine";
 const subBase   = "text-xs px-3 py-1.5 rounded-md transition flex items-center gap-2 w-full text-left";
 const subActive   = `${subBase} text-wine font-medium bg-winePale`;
 const subInactive = `${subBase} text-dark/60 hover:text-wine hover:bg-winePale`;
-const TABS = ["Overview", "Goals", "Expenses", "Analysis"];
+const TABS = ["Vue d'ensemble", "Objectifs", "Dépenses", "Analyse"];
 
 export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
@@ -29,8 +29,8 @@ export default function Sidebar({ open, onClose }) {
   const getCurrentTab = () => {
     const params = new URLSearchParams(location.search);
     const t = params.get("tab");
-    if (t) return TABS.find(x => x.toLowerCase() === t.toLowerCase()) ?? "Overview";
-    if (location.pathname === "/financial") return "Overview";
+    if (t) return TABS.find(x => x.toLowerCase() === t.toLowerCase()) ?? "Vue d'ensemble";
+    if (location.pathname === "/financial") return "Vue d'ensemble";
     return null;
   };
   const currentTab = getCurrentTab();
@@ -47,7 +47,7 @@ export default function Sidebar({ open, onClose }) {
           "md:sticky md:z-10",
           open ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           "transition-transform duration-200",
-        ].join(" ")} aria-label="Sidebar">
+        ].join(" ")} aria-label="Menu latéral">
 
           <div className="flex h-full flex-col p-4 overflow-y-auto">
 
@@ -59,31 +59,31 @@ export default function Sidebar({ open, onClose }) {
                 <span className="text-base font-bold text-dark">FinFamPlan</span>
               </button>
               <button className="rounded-md p-1.5 hover:bg-winePale md:hidden text-dark/50"
-                      onClick={onClose} aria-label="Close sidebar">✕</button>
+                      onClick={onClose} aria-label="Fermer le menu">✕</button>
             </div>
 
             
             <nav className="space-y-1 flex-1">
               <NavLink to="/dashboard" className={linkClass} onClick={onClose}>
-                <span>🏠</span> Dashboard
+                <span>🏠</span> Tableau de bord
               </NavLink>
 
               <NavLink to="/financial" className={linkClass} onClick={onClose}>
-                <span>💰</span> Financial profile
+                <span>💰</span> Profil financier
               </NavLink>
 
               <div className="ml-4 space-y-0.5 border-l-2 border-winePale pl-3">
-                <button onClick={() => goToTab("Overview")} className={currentTab === "Overview" ? subActive : subInactive}>
-                  <span>◦</span> Overview
+                <button onClick={() => goToTab("Vue d'ensemble")} className={currentTab === "Vue d'ensemble" ? subActive : subInactive}>
+                  <span>◦</span> Vue d'ensemble
                 </button>
-                <button onClick={() => goToTab("Goals")} className={currentTab === "Goals" ? subActive : subInactive}>
-                  <span>◦</span> Goals
+                <button onClick={() => goToTab("Objectifs")} className={currentTab === "Objectifs" ? subActive : subInactive}>
+                  <span>◦</span> Objectifs
                 </button>
-                <button onClick={() => goToTab("Expenses")} className={currentTab === "Expenses" ? subActive : subInactive}>
-                  <span>◦</span> Expenses
+                <button onClick={() => goToTab("Dépenses")} className={currentTab === "Dépenses" ? subActive : subInactive}>
+                  <span>◦</span> Dépenses
                 </button>
-                <button onClick={() => goToTab("Analysis")} className={currentTab === "Analysis" ? subActive : subInactive}>
-                  <span>◦</span> Analysis
+                <button onClick={() => goToTab("Analyse")} className={currentTab === "Analyse" ? subActive : subInactive}>
+                  <span>◦</span> Analyse
                 </button>
               </div>
 
@@ -91,27 +91,27 @@ export default function Sidebar({ open, onClose }) {
                 <span>💳</span> Transactions
               </NavLink>
               <NavLink to="/bills" className={linkClass} onClick={onClose}>
-                <span>🧾</span> Bills
+                <span>🧾</span> Factures
               </NavLink>
               <NavLink to="/family" className={linkClass} onClick={onClose}>
-                <span>👨‍👩‍👧</span> Family
+                <span>👨‍👩‍👧</span> Famille
               </NavLink>
             </nav>
 
             
             <div className="mt-4 rounded-xl border border-winePale bg-winePale/50 p-3">
               <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-wine/70">
-                Quick actions
+                Actions rapides
               </div>
               <div className="space-y-1">
-                
+
                 <button className={`${base} w-full text-left ${inactive}`}
                         onClick={() => setBillOpen(true)}>
-                  🧾 Add bill
+                  🧾 Ajouter une facture
                 </button>
                 <button className={`${base} w-full text-left ${inactive}`}
                         onClick={() => setGoalOpen(true)}>
-                  🎯 Add goal
+                  🎯 Ajouter un objectif
                 </button>
               </div>
             </div>
@@ -119,11 +119,11 @@ export default function Sidebar({ open, onClose }) {
             
             <div className="mt-4 border-t border-winePale pt-4 space-y-1">
               <NavLink to="/settings/personal" className={linkClass} onClick={onClose}>
-                <span>⚙️</span> Settings
+                <span>⚙️</span> Paramètres
               </NavLink>
               <button onClick={handleLogout}
                       className={`${base} w-full text-left hover:bg-red-50 hover:text-red-700 text-red-600`}>
-                <span>🚪</span> Log out
+                <span>🚪</span> Se déconnecter
               </button>
             </div>
           </div>

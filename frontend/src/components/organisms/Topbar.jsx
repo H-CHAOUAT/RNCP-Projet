@@ -14,16 +14,16 @@ export default function Topbar({ onMenuClick }) {
     }, []);
 
     const { title, subtitle } = useMemo(() => {
-        if (pathname.startsWith("/dashboard"))    return { title: "Dashboard",         subtitle: `Welcome back, ${userName || "..."}!` };
-        if (pathname.startsWith("/financial"))    return { title: "Financial profile", subtitle: "Set your income and monthly expenses" };
-        if (pathname.startsWith("/bills"))        return { title: "Bills",             subtitle: "Manage recurring bills" };
-        if (pathname.startsWith("/transactions")) return { title: "Transactions",      subtitle: "Track and manage your transactions" };
-        if (pathname.startsWith("/family"))       return { title: "Family",            subtitle: "Manage your household" };
-        if (pathname.includes("/personal"))       return { title: "Settings",          subtitle: "Personal information" };
-        if (pathname.includes("/preferences"))    return { title: "Settings",          subtitle: "Preferences" };
-        if (pathname.includes("/security"))       return { title: "Settings",          subtitle: "Security" };
-        if (pathname.includes("/family"))         return { title: "Settings",          subtitle: "Family" };
-        if (pathname.startsWith("/settings"))     return { title: "Settings",          subtitle: "Manage your account settings" };
+        if (pathname.startsWith("/dashboard"))    return { title: "Tableau de bord",    subtitle: `Bon retour, ${userName || "..."}!` };
+        if (pathname.startsWith("/financial"))    return { title: "Profil financier",   subtitle: "Définissez vos revenus et charges mensuelles" };
+        if (pathname.startsWith("/bills"))        return { title: "Factures",           subtitle: "Gérez vos factures récurrentes" };
+        if (pathname.startsWith("/transactions")) return { title: "Transactions",       subtitle: "Suivez et gérez vos transactions" };
+        if (pathname.startsWith("/family"))       return { title: "Famille",            subtitle: "Gérez votre foyer" };
+        if (pathname.includes("/personal"))       return { title: "Paramètres",         subtitle: "Informations personnelles" };
+        if (pathname.includes("/preferences"))    return { title: "Paramètres",         subtitle: "Préférences" };
+        if (pathname.includes("/security"))       return { title: "Paramètres",         subtitle: "Sécurité" };
+        if (pathname.includes("/family"))         return { title: "Paramètres",         subtitle: "Famille" };
+        if (pathname.startsWith("/settings"))     return { title: "Paramètres",         subtitle: "Gérez les paramètres de votre compte" };
         return { title: "FinFamPlan", subtitle: "" };
     }, [pathname, userName]);
 
@@ -36,7 +36,7 @@ export default function Topbar({ onMenuClick }) {
             <div className="flex h-16 items-center gap-3 px-4 md:px-6">
                 <button
                     className="inline-flex items-center justify-center rounded-md p-2 hover:bg-winePale md:hidden text-dark/70"
-                    onClick={onMenuClick} aria-label="Open menu" type="button">
+                    onClick={onMenuClick} aria-label="Ouvrir le menu" type="button">
                     ☰
                 </button>
                 <div className="min-w-0 flex-1">

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import DateInput from "../components/atoms/DateInput.jsx";
 import { apiFetch } from "../api/apiFetch";
+import { categoryLabel } from "../constants/labels";
 
 const money = (n, currency = "EUR") => {
     try { return new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(Number(n ?? 0)); }
@@ -59,7 +60,7 @@ export default function TransactionsPage() {
     };
 
     const handleSave = async () => {
-        if (!form.amount || Number(form.amount) <= 0) { setMessage({ type: "error", text: "Enter a valid amount." }); return; }
+        if (!form.amount || Number(form.amount) <= 0) { setMessage({ type: "error", text: "Entrez un montant valide." }); return; }
         setSaving(true);
         setMessage({ type: "", text: "" });
         try {
@@ -82,13 +83,13 @@ export default function TransactionsPage() {
             if (res.ok) {
                 const created = await res.json();
                 setTransactions(prev => [created, ...prev]);
-                setMessage({ type: "success", text: "✅ Saved!" });
+                setMessage({ type: "success", text: "✅ Enregistré !" });
                 setForm({ type: "expense", category: "GROCERIES", customCategory: "", amount: "", description: "", date: new Date().toISOString().split("T")[0] });
                 setShowForm(false);
             } else {
-                setMessage({ type: "error", text: "❌ Failed to save transaction." });
+                setMessage({ type: "error", text: "❌ Échec de l'enregistrement de la transaction." });
             }
-        } catch { setMessage({ type: "error", text: "❌ Network error." }); }
+        } catch { setMessage({ type: "error", text: "❌ Erreur réseau. Veuillez réessayer." }); }
         finally { setSaving(false); }
     };
 
@@ -103,56 +104,56 @@ export default function TransactionsPage() {
             <div className="flex items-start justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-900">Transactions</h1>
-                    <p className="text-sm text-slate-600">Track income and expenses.{userRole === "CHILD" ? " (Your transactions only)" : ""}</p>
+                    <p className="text-sm text-slate-600">Suivez vos revenus et dépenses.{userRole === "CHILD" ? " (Vos transactions uniquement)" : ""}</p>
                 </div>
                 <button className="rounded-lg bg-wine text-white px-4 py-2 text-sm font-medium hover:bg-wineDark transition" onClick={() => setShowForm(v => !v)}>
-                    {showForm ? "✕ Cancel" : "+ Add transaction"}
+                    {showForm ? "✕ Annuler" : "+ Ajouter une transaction"}
                 </button>
             </div>
 
             
             <div className="grid grid-cols-3 gap-4">
-                <div className="rounded-xl border bg-green-50 p-4"><div className="text-xs text-green-600">Income</div><div className="text-xl font-semibold text-green-800 mt-1">+{money(totalIncome, currency)}</div></div>
-                <div className="rounded-xl border bg-red-50 p-4"><div className="text-xs text-red-600">Expenses</div><div className="text-xl font-semibold text-red-800 mt-1">-{money(totalExpense, currency)}</div></div>
-                <div className={`rounded-xl border p-4 ${net >= 0 ? "bg-blue-50" : "bg-amber-50"}`}><div className={`text-xs ${net >= 0 ? "text-blue-600" : "text-amber-600"}`}>Net</div><div className={`text-xl font-semibold mt-1 ${net >= 0 ? "text-blue-800" : "text-amber-800"}`}>{net >= 0 ? "+" : ""}{money(net, currency)}</div></div>
+                <div className="rounded-xl border bg-green-50 p-4"><div className="text-xs text-green-600">Revenus</div><div className="text-xl font-semibold text-green-800 mt-1">+{money(totalIncome, currency)}</div></div>
+                <div className="rounded-xl border bg-red-50 p-4"><div className="text-xs text-red-600">Dépenses</div><div className="text-xl font-semibold text-red-800 mt-1">-{money(totalExpense, currency)}</div></div>
+                <div className={`rounded-xl border p-4 ${net >= 0 ? "bg-blue-50" : "bg-amber-50"}`}><div className={`text-xs ${net >= 0 ? "text-blue-600" : "text-amber-600"}`}>Solde</div><div className={`text-xl font-semibold mt-1 ${net >= 0 ? "text-blue-800" : "text-amber-800"}`}>{net >= 0 ? "+" : ""}{money(net, currency)}</div></div>
             </div>
 
             
             {showForm && (
                 <div className="rounded-xl border bg-white p-6 space-y-4">
-                    <div className="font-semibold text-slate-800">New transaction</div>
+                    <div className="font-semibold text-slate-800">Nouvelle transaction</div>
                     {message.text && <div className={`rounded-lg border p-3 text-sm ${message.type === "success" ? "bg-green-50 border-green-200 text-green-800" : "bg-red-50 border-red-200 text-red-800"}`}>{message.text}</div>}
 
                     
                     <div className="flex rounded-lg border overflow-hidden w-fit">
-                        <button className={`px-5 py-2 text-sm font-medium transition ${form.type === "expense" ? "bg-red-500 text-white" : "text-slate-600 hover:bg-slate-50"}`} onClick={() => setForm({ ...form, type: "expense", category: "GROCERIES", customCategory: "" })}>− Expense</button>
-                        <button className={`px-5 py-2 text-sm font-medium transition ${form.type === "income" ? "bg-green-500 text-white" : "text-slate-600 hover:bg-slate-50"}`} onClick={() => setForm({ ...form, type: "income", category: "SALARY", customCategory: "" })}>+ Income</button>
+                        <button className={`px-5 py-2 text-sm font-medium transition ${form.type === "expense" ? "bg-red-500 text-white" : "text-slate-600 hover:bg-slate-50"}`} onClick={() => setForm({ ...form, type: "expense", category: "GROCERIES", customCategory: "" })}>− Dépense</button>
+                        <button className={`px-5 py-2 text-sm font-medium transition ${form.type === "income" ? "bg-green-500 text-white" : "text-slate-600 hover:bg-slate-50"}`} onClick={() => setForm({ ...form, type: "income", category: "SALARY", customCategory: "" })}>+ Revenu</button>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                         <div>
-                            <label className="text-xs font-medium text-slate-600 mb-1 block">Category</label>
+                            <label className="text-xs font-medium text-slate-600 mb-1 block">Catégorie</label>
                             <select className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wine" value={form.category} onChange={e => setForm({ ...form, category: e.target.value, customCategory: "" })}>
-                                {categories.map(c => <option key={c} value={c}>{c === "OTHER" ? "Other (custom)" : c}</option>)}
+                                {categories.map(c => <option key={c} value={c}>{c === "OTHER" ? "Autre (personnalisée)" : categoryLabel(c)}</option>)}
                             </select>
                         </div>
 
-                        
+
                         {form.category === "OTHER" && (
                             <div>
-                                <label className="text-xs font-medium text-slate-600 mb-1 block">Describe it</label>
+                                <label className="text-xs font-medium text-slate-600 mb-1 block">Décrivez-la</label>
                                 <input
                                     type="text"
                                     className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wine"
                                     value={form.customCategory}
                                     onChange={e => setForm({ ...form, customCategory: e.target.value })}
-                                    placeholder={form.type === "income" ? "e.g. Sold laptop" : "e.g. Dentist"}
+                                    placeholder={form.type === "income" ? "ex. Vente d'un ordinateur" : "ex. Dentiste"}
                                 />
                             </div>
                         )}
 
                         <div>
-                            <label className="text-xs font-medium text-slate-600 mb-1 block">Amount ({currency})</label>
+                            <label className="text-xs font-medium text-slate-600 mb-1 block">Montant ({currency})</label>
                             <input type="number" className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wine" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} placeholder="0.00" min="0" />
                         </div>
                         <div>
@@ -160,31 +161,31 @@ export default function TransactionsPage() {
                             <DateInput value={form.date} onChange={(iso) => setForm({ ...form, date: iso })} />
                         </div>
                         <div>
-                            <label className="text-xs font-medium text-slate-600 mb-1 block">Note (optional)</label>
-                            <input type="text" className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wine" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Optional note" />
+                            <label className="text-xs font-medium text-slate-600 mb-1 block">Note (facultatif)</label>
+                            <input type="text" className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-wine" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} placeholder="Note facultative" />
                         </div>
                     </div>
                     <button className="rounded-lg bg-wine text-white px-6 py-2 text-sm font-medium hover:bg-wineDark disabled:opacity-50 transition" onClick={handleSave} disabled={saving}>
-                        {saving ? "Saving..." : "Save transaction"}
+                        {saving ? "Enregistrement..." : "Enregistrer la transaction"}
                     </button>
                 </div>
             )}
 
             
             <div className="flex gap-2">
-                {["all", "income", "expense"].map(f => (
-                    <button key={f} className={`rounded-full px-4 py-1.5 text-sm font-medium transition capitalize ${filter === f ? "bg-wine text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`} onClick={() => setFilter(f)}>{f}</button>
+                {[["all", "Toutes"], ["income", "Revenus"], ["expense", "Dépenses"]].map(([f, label]) => (
+                    <button key={f} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${filter === f ? "bg-wine text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`} onClick={() => setFilter(f)}>{label}</button>
                 ))}
             </div>
 
             
             <div className="rounded-xl border bg-white overflow-hidden">
-                {loading ? <div className="p-6 text-center text-slate-500">Loading...</div> :
+                {loading ? <div className="p-6 text-center text-slate-500">Chargement...</div> :
                     filtered.length === 0 ? (
                         <div className="p-10 text-center">
                             <div className="text-3xl mb-2">💳</div>
-                            <p className="text-slate-500">No transactions yet.</p>
-                            <button className="mt-2 text-sm text-wine hover:underline" onClick={() => setShowForm(true)}>Add your first →</button>
+                            <p className="text-slate-500">Aucune transaction pour l'instant.</p>
+                            <button className="mt-2 text-sm text-wine hover:underline" onClick={() => setShowForm(true)}>Ajoutez la première →</button>
                         </div>
                     ) : (
                         <div className="divide-y">
@@ -196,7 +197,7 @@ export default function TransactionsPage() {
                                             <div className={`h-9 w-9 rounded-full flex items-center justify-center font-bold ${isIncome ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>{isIncome ? "↑" : "↓"}</div>
                                             <div>
                                                 <div className="text-sm font-medium text-slate-800">{t.description || t.category}</div>
-                                                <div className="text-xs text-slate-400">{t.date} · {t.category}</div>
+                                                <div className="text-xs text-slate-400">{new Date(t.date + "T12:00:00").toLocaleDateString("fr-FR")} · {categoryLabel(t.category)}</div>
                                             </div>
                                         </div>
                                         <div className={`text-sm font-semibold ${isIncome ? "text-green-600" : "text-red-500"}`}>{isIncome ? "+" : "−"}{money(t.amount, currency)}</div>

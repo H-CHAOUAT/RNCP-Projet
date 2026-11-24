@@ -24,14 +24,14 @@ export default function GoalCard({ goal, currency = "EUR" }) {
                     ) : null}
 
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-                        {goal.deadline ? <span>Deadline: {goal.deadline}</span> : null}
-                        {goal.createdByName ? <span>Created by: {goal.createdByName}</span> : null}
-                        <span>{money(remaining, currency)} left to save</span>
+                        {goal.deadline ? <span>Échéance : {new Date(goal.deadline + "T12:00:00").toLocaleDateString("fr-FR")}</span> : null}
+                        {goal.createdByName ? <span>Créé par : {goal.createdByName}</span> : null}
+                        <span>{money(remaining, currency)} restant à épargner</span>
                     </div>
 
                     {goal.planLabel ? (
                         <div className="mt-1 text-xs font-medium text-wine">
-                            Plan: {goal.planLabel} — {money(goal.planAmountPerPayday, currency)}/payday
+                            Plan : {goal.planLabel} — {money(goal.planAmountPerPayday, currency)}/paie
                         </div>
                     ) : null}
                 </div>

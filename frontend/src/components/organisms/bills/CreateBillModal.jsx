@@ -24,8 +24,8 @@ export default function CreateBillModal({ open, onClose, onCreated }) {
 
     const handleSave = async () => {
         setError("");
-        if (!form.title.trim()) { setError("Enter a bill title."); return; }
-        if (!form.amount || Number(form.amount) <= 0) { setError("Enter a valid amount."); return; }
+        if (!form.title.trim()) { setError("Entrez un titre de facture."); return; }
+        if (!form.amount || Number(form.amount) <= 0) { setError("Entrez un montant valide."); return; }
 
         setSaving(true);
         try {
@@ -46,9 +46,9 @@ export default function CreateBillModal({ open, onClose, onCreated }) {
                 reset();
                 onClose?.();
             } else {
-                setError("❌ Failed to save. Please try again.");
+                setError("❌ Échec de l'enregistrement. Veuillez réessayer.");
             }
-        } catch { setError("❌ Network error. Please try again."); }
+        } catch { setError("❌ Erreur réseau. Veuillez réessayer."); }
         finally { setSaving(false); }
     };
 
@@ -60,9 +60,9 @@ export default function CreateBillModal({ open, onClose, onCreated }) {
 
                 <div className="flex items-start justify-between mb-5">
                     <div>
-                        <h2 className="text-xl font-semibold text-dark">Add a bill</h2>
+                        <h2 className="text-xl font-semibold text-dark">Ajouter une facture</h2>
                         <p className="text-sm text-dark/50 mt-0.5">
-                            The amount will be deducted from your balance.
+                            Le montant sera déduit de votre solde.
                         </p>
                     </div>
                     <button onClick={handleClose}
@@ -77,22 +77,22 @@ export default function CreateBillModal({ open, onClose, onCreated }) {
 
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-dark mb-1">Bill title *</label>
+                        <label className="block text-sm font-medium text-dark mb-1">Titre de la facture *</label>
                         <input className={inputCls} value={form.title}
                                onChange={e => setForm({ ...form, title: e.target.value })}
-                               placeholder="e.g. Electricity" />
+                               placeholder="ex. Électricité" />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-dark mb-1">Amount (€) *</label>
+                            <label className="block text-sm font-medium text-dark mb-1">Montant (€) *</label>
                             <input type="number" min="0" className={inputCls}
                                    value={form.amount}
                                    onChange={e => setForm({ ...form, amount: e.target.value })}
                                    placeholder="0.00" />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-dark mb-1">Due date</label>
+                            <label className="block text-sm font-medium text-dark mb-1">Date d'échéance</label>
                             <DateInput
                                 value={form.dueDate}
                                 onChange={(iso) => setForm({ ...form, dueDate: iso })}
@@ -101,27 +101,27 @@ export default function CreateBillModal({ open, onClose, onCreated }) {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-dark mb-1">Description (optional)</label>
+                        <label className="block text-sm font-medium text-dark mb-1">Description (facultatif)</label>
                         <input className={inputCls} value={form.description}
                                onChange={e => setForm({ ...form, description: e.target.value })}
-                               placeholder="Add details..." />
+                               placeholder="Ajouter des détails..." />
                     </div>
 
                     <label className="flex items-center gap-2 text-sm text-dark cursor-pointer">
                         <input type="checkbox" checked={form.paid}
                                onChange={e => setForm({ ...form, paid: e.target.checked })}
                                className="rounded" />
-                        Already paid
+                        Déjà payée
                     </label>
                 </div>
 
                 <div className="mt-6 flex gap-3">
                     <Button type="button" onClick={handleSave} disabled={saving} className="flex-1">
-                        {saving ? "Saving..." : "Add bill"}
+                        {saving ? "Enregistrement..." : "Ajouter une facture"}
                     </Button>
                     <button type="button" onClick={handleClose} disabled={saving}
                             className="flex-1 rounded-lg border border-slate-300 bg-white text-dark font-semibold py-2 px-4 hover:bg-slate-50 disabled:opacity-50 transition">
-                        Cancel
+                        Annuler
                     </button>
                 </div>
             </div>
