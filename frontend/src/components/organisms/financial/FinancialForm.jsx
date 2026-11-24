@@ -49,6 +49,7 @@ export default function FinancialForm() {
     const [currency, setCurrency] = useState("EUR");
     const [currentBalance, setCurrentBalance] = useState("0");
     const [paydayDay, setPaydayDay] = useState("1");
+    const [alertThreshold, setAlertThreshold] = useState("0");
     const [lastSalaryApplied, setLastSalaryApplied] = useState(null);
 
     const [, setBalanceLocked] = useState(false);
@@ -76,6 +77,7 @@ export default function FinancialForm() {
         setCurrency(data.currency ?? "EUR");
         setCurrentBalance(String(data.currentBalance ?? "0"));
         setPaydayDay(String(data.paydayDay ?? "1"));
+        setAlertThreshold(String(data.alertThreshold ?? "0"));
         setLastSalaryApplied(data.lastSalaryApplied ?? null);
         setBalanceLocked(data.balanceLocked ?? false);
 
@@ -147,6 +149,7 @@ export default function FinancialForm() {
         monthlyIncome: Number(monthlyIncome || 0),
         currentBalance: Number(currentBalance || 0),
         paydayDay: Number(paydayDay || 1),
+        alertThreshold: Number(alertThreshold || 0),
         currency,
         expenses: expenses.map((e) => ({
             category: e.custom ? (e.customLabel?.trim() || "OTHER") : e.category,
@@ -265,7 +268,19 @@ export default function FinancialForm() {
                             placeholder="1"
                         />
                     </FormField>
+
+                    <FormField label="Seuil d'alerte">
+                        <Input
+                            type="number"
+                            value={alertThreshold}
+                            onChange={(e) => setAlertThreshold(e.target.value)}
+                            placeholder="0"
+                        />
+                    </FormField>
                 </div>
+                <p className="text-xs text-slate-400 -mt-2">
+                    Vous serez alerté si votre solde prévisionnel passe sous ce montant (0 par défaut).
+                </p>
 
                 {lastSalaryApplied && (
                     <p className="text-sm text-slate-600">

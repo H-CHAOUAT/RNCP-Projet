@@ -5,10 +5,13 @@ import GoalsList from "../components/organisms/goals/GoalsList";
 import CreateGoalModal from "../components/organisms/goals/CreateGoalModal";
 import { apiFetch } from "../api/apiFetch";
 import { categoryLabel } from "../constants/labels";
+import Disclaimer from "../components/atoms/Disclaimer";
 
 function AnalysisTab({ userId }) {
     const [financial, setFinancial] = useState(null);
     const [goals, setGoals] = useState([]);
+    const [forecast, setForecast] = useState(null);
+    const [multiForecast, setMultiForecast] = useState(null);
     const [loading, setLoading] = useState(true);
     const [period, setPeriod] = useState("month");
 
@@ -21,10 +24,14 @@ function AnalysisTab({ userId }) {
         Promise.all([
             apiFetch(`/api/financial/${userId}`).then(r => (r.ok ? r.json() : null)),
             apiFetch(`/api/goals/user/${userId}`).then(r => (r.ok ? r.json() : [])),
+            apiFetch(`/api/financial/${userId}/forecast`).then(r => (r.ok ? r.json() : null)),
+            apiFetch(`/api/financial/${userId}/forecast/multi-month?months=3`).then(r => (r.ok ? r.json() : null)),
         ])
-            .then(([fin, g]) => {
+            .then(([fin, g, fc, mfc]) => {
                 setFinancial(fin);
                 setGoals(g || []);
+                setForecast(fc);
+                setMultiForecast(mfc);
             })
             .catch(console.error)
             .finally(() => setLoading(false));
@@ -69,7 +76,7 @@ function AnalysisTab({ userId }) {
         <div className="space-y-6 text-left">
             <div className="flex justify-end">
                 <div className="flex overflow-hidden rounded-lg border bg-white text-sm">
-                    {[["month", "Ce mois-ci"], ["3months", "3 mois"]].map(([val, label]) => (
+                    {[["month", "Jusqu'à ma prochaine paie"], ["3months", "Sur 3 mois"]].map(([val, label]) => (
                         <button
                             key={val}
                             onClick={() => setPeriod(val)}
@@ -84,6 +91,78 @@ function AnalysisTab({ userId }) {
                     ))}
                 </div>
             </div>
+
+            {period === "month" && forecast && (
+                <div className="rounded-xl border bg-white p-6 text-left space-y-3">
+                    <h3 className="font-semibold text-dark">Solde prévisionnel jusqu'à ma prochaine paie</h3>
+                    <div className="flex flex-wrap gap-6">
+                        <div>
+                            <div className="text-xs text-dark/40">Solde actuel</div>
+                            <div className="text-xl font-semibold text-dark">{fmt(forecast.currentBalance)}</div>
+                        </div>
+                        <div>
+                            <div className="text-xs text-dark/40">
+                                Prévu au {new Date(forecast.nextPayday + "T12:00:00").toLocaleDateString("fr-FR")}
+                            </div>
+                            <div className={`text-xl font-semibold ${forecast.belowThreshold ? "text-amber-700" : "text-emerald-700"}`}>
+                                {fmt(forecast.forecastBalance)}
+                            </div>
+                        </div>
+                    </div>
+
+                    {forecast.belowThreshold && (
+                        <p className="text-sm text-amber-700">
+                            ⚠️ Ce solde est sous votre seuil d'alerte ({fmt(forecast.alertThreshold)}).
+                        </p>
+                    )}
+
+                    {forecast.atRisk ? (
+                        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                            <strong>Risque de découvert le {new Date(forecast.firstAtRiskDate + "T12:00:00").toLocaleDateString("fr-FR")}</strong>
+                            <p className="mt-1">
+                                À cause de « {forecast.atRiskItemTitle} », il vous manquerait environ{" "}
+                                <strong>{fmt(forecast.shortfallAmount)}</strong> à cette date.
+                            </p>
+                            {forecast.lines?.length > 0 && (
+                                <ul className="mt-2 space-y-0.5 text-xs text-red-700">
+                                    {forecast.lines.map((l, i) => (
+                                        <li key={i}>
+                                            {new Date(l.date + "T12:00:00").toLocaleDateString("fr-FR")} — {l.label} : {fmt(l.amount)} → solde {fmt(l.balanceAfter)}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    ) : forecast.lines?.length > 0 ? (
+                        <p className="text-sm text-dark/50">
+                            {forecast.lines.length} facture{forecast.lines.length !== 1 ? "s" : ""} à venir, toutes couvertes par votre solde.
+                        </p>
+                    ) : null}
+
+                    <Disclaimer />
+                </div>
+            )}
+
+            {period === "3months" && multiForecast && (
+                <div className="rounded-xl border bg-white p-6 text-left space-y-3">
+                    <h3 className="font-semibold text-dark">Prévisionnel sur {multiForecast.months.length} mois</h3>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                        {multiForecast.months.map((m, i) => (
+                            <div key={i} className="rounded-lg border p-4">
+                                <div className="text-xs text-dark/40">
+                                    Paie du {new Date(m.payday + "T12:00:00").toLocaleDateString("fr-FR")}
+                                </div>
+                                <div className="mt-1 text-lg font-semibold text-dark">{fmt(m.highBalance)}</div>
+                                <div className="text-xs text-dark/40">
+                                    Scénario bas : {fmt(m.lowBalance)}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                    <p className="text-xs text-dark/40">{multiForecast.assumptionNote}</p>
+                    <Disclaimer />
+                </div>
+            )}
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 {[
@@ -246,6 +325,9 @@ function AnalysisTab({ userId }) {
                                 </div>
                             );
                         })}
+                    </div>
+                    <div className="mt-4">
+                        <Disclaimer />
                     </div>
                 </div>
             )}
