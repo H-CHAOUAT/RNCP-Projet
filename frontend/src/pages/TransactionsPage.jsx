@@ -3,6 +3,13 @@ import DateInput from "../components/atoms/DateInput.jsx";
 import { apiFetch } from "../api/apiFetch";
 import { categoryLabel } from "../constants/labels";
 
+const monthLabel = (m) => {
+    try {
+        const [y, mo] = m.split("-").map(Number);
+        return new Date(y, mo - 1, 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+    } catch { return m; }
+};
+
 const money = (n, currency = "EUR") => {
     try { return new Intl.NumberFormat("fr-FR", { style: "currency", currency }).format(Number(n ?? 0)); }
     catch { return `${Number(n ?? 0).toFixed(2)} ${currency}`; }
@@ -20,9 +27,12 @@ export default function TransactionsPage() {
     }, []);
 
     const [transactions, setTransactions] = useState([]);
+    const [totalsByCategory, setTotalsByCategory] = useState({});
     const [loading, setLoading] = useState(true);
     const [showForm, setShowForm] = useState(false);
     const [filter, setFilter] = useState("all");
+    const [monthFilter, setMonthFilter] = useState(""); // "" = all months, else "2026-11"
+    const [categoryFilter, setCategoryFilter] = useState(""); // "" = all categories
     const [currency, setCurrency] = useState("EUR");
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" });
@@ -47,15 +57,32 @@ export default function TransactionsPage() {
 
     useEffect(() => {
         if (!userId) { setLoading(false); return; }
-        loadTransactions();
         apiFetch(`/api/financial/${userId}`).then(r => r.ok ? r.json() : null).then(d => { if (d?.currency) setCurrency(d.currency); }).catch(() => {});
     }, [userId]);
 
+    useEffect(() => {
+        if (!userId) { setLoading(false); return; }
+        loadTransactions();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [userId, monthFilter, categoryFilter]);
+
     const loadTransactions = async () => {
+        setLoading(true);
         try {
-            const res = await apiFetch(`/api/transactions/user/${userId}`);
-            setTransactions(res.ok ? await res.json() : []);
-        } catch { setTransactions([]); }
+            const params = new URLSearchParams();
+            if (monthFilter) params.set("month", monthFilter);
+            if (categoryFilter) params.set("category", categoryFilter);
+            const qs = params.toString();
+            const res = await apiFetch(`/api/transactions/user/${userId}${qs ? `?${qs}` : ""}`);
+            if (res.ok) {
+                const data = await res.json();
+                setTransactions(data.transactions ?? []);
+                setTotalsByCategory(data.totalsByCategory ?? {});
+            } else {
+                setTransactions([]);
+                setTotalsByCategory({});
+            }
+        } catch { setTransactions([]); setTotalsByCategory({}); }
         finally { setLoading(false); }
     };
 
@@ -81,8 +108,8 @@ export default function TransactionsPage() {
                 }),
             });
             if (res.ok) {
-                const created = await res.json();
-                setTransactions(prev => [created, ...prev]);
+                await res.json();
+                await loadTransactions();
                 setMessage({ type: "success", text: "✅ Enregistré !" });
                 setForm({ type: "expense", category: "GROCERIES", customCategory: "", amount: "", description: "", date: new Date().toISOString().split("T")[0] });
                 setShowForm(false);
@@ -171,14 +198,51 @@ export default function TransactionsPage() {
                 </div>
             )}
 
-            
-            <div className="flex gap-2">
-                {[["all", "Toutes"], ["income", "Revenus"], ["expense", "Dépenses"]].map(([f, label]) => (
-                    <button key={f} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${filter === f ? "bg-wine text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`} onClick={() => setFilter(f)}>{label}</button>
-                ))}
+
+            <div className="flex flex-wrap items-end gap-3">
+                <div className="flex gap-2">
+                    {[["all", "Toutes"], ["income", "Revenus"], ["expense", "Dépenses"]].map(([f, label]) => (
+                        <button key={f} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${filter === f ? "bg-wine text-white" : "bg-white border text-slate-600 hover:bg-slate-50"}`} onClick={() => setFilter(f)}>{label}</button>
+                    ))}
+                </div>
+                <div>
+                    <label className="text-xs font-medium text-slate-600 mb-1 block">Mois</label>
+                    <input type="month" className="rounded-lg border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine"
+                           value={monthFilter} onChange={e => setMonthFilter(e.target.value)} />
+                </div>
+                <div>
+                    <label className="text-xs font-medium text-slate-600 mb-1 block">Catégorie</label>
+                    <select className="rounded-lg border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-wine"
+                            value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+                        <option value="">Toutes les catégories</option>
+                        {[...new Set([...EXPENSE_CATEGORIES, ...INCOME_TYPES])].map(c => (
+                            <option key={c} value={c}>{categoryLabel(c)}</option>
+                        ))}
+                    </select>
+                </div>
+                {(monthFilter || categoryFilter) && (
+                    <button className="text-sm text-wine hover:underline pb-1.5" onClick={() => { setMonthFilter(""); setCategoryFilter(""); }}>
+                        Réinitialiser
+                    </button>
+                )}
             </div>
 
-            
+            {Object.keys(totalsByCategory).length > 0 && (
+                <div className="rounded-xl border bg-white p-5">
+                    <div className="mb-3 text-sm font-semibold text-slate-800">
+                        Total par catégorie{monthFilter ? ` — ${monthLabel(monthFilter)}` : ""}
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                        {Object.entries(totalsByCategory).map(([cat, total]) => (
+                            <span key={cat} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
+                                {categoryLabel(cat)} : <strong>{money(total, currency)}</strong>
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+
             <div className="rounded-xl border bg-white overflow-hidden">
                 {loading ? <div className="p-6 text-center text-slate-500">Chargement...</div> :
                     filtered.length === 0 ? (

@@ -1,5 +1,6 @@
 package com.finfamplan.backend.controller;
 
+import com.finfamplan.backend.dto.TransactionsResponseDto;
 import com.finfamplan.backend.model.Transaction;
 import com.finfamplan.backend.model.User;
 import com.finfamplan.backend.repository.TransactionRepository;
@@ -12,8 +13,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/transactions")
@@ -31,18 +34,57 @@ public class TransactionController {
         this.accessGuard = accessGuard;
     }
 
+    /**
+     * Story 4: filterable by month ("2026-11") and/or category, with a total
+     * per category. Filtering happens in memory over the existing finder
+     * methods rather than a new JPQL aggregate — this app's per-user
+     * transaction volume is small, and it avoids a second, drifting query.
+     */
     @GetMapping("/user/{userId}")
-    public List<Transaction> getTransactions(@PathVariable Long userId, HttpServletRequest request) {
+    public TransactionsResponseDto getTransactions(
+            @PathVariable Long userId,
+            @RequestParam(required = false) String month,
+            @RequestParam(required = false) String category,
+            HttpServletRequest request
+    ) {
         accessGuard.requireSelf(request, userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
-        if ("PARENT".equals(user.getRole().name()) && user.getFamilyGroup() != null) {
-            return transactionRepository.findByUser_FamilyGroup_IdOrderByDateDesc(
-                    user.getFamilyGroup().getId()
-            );
+        List<Transaction> all = ("PARENT".equals(user.getRole().name()) && user.getFamilyGroup() != null)
+                ? transactionRepository.findByUser_FamilyGroup_IdOrderByDateDesc(user.getFamilyGroup().getId())
+                : transactionRepository.findByUser_UserIdOrderByDateDesc(userId);
+
+        LocalDate monthStart = null;
+        LocalDate monthEnd = null;
+        if (month != null && !month.isBlank()) {
+            try {
+                YearMonth ym = YearMonth.parse(month);
+                monthStart = ym.atDay(1);
+                monthEnd = ym.atEndOfMonth();
+            } catch (Exception e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le mois doit être au format AAAA-MM");
+            }
         }
-        return transactionRepository.findByUser_UserIdOrderByDateDesc(userId);
+        final LocalDate from = monthStart;
+        final LocalDate to = monthEnd;
+
+        List<Transaction> filtered = all.stream()
+                .filter(t -> from == null || !t.getDate().isBefore(from))
+                .filter(t -> to == null || !t.getDate().isAfter(to))
+                .filter(t -> category == null || category.isBlank() || category.equalsIgnoreCase(t.getCategory()))
+                .toList();
+
+        Map<String, BigDecimal> totalsByCategory = filtered.stream()
+                .collect(Collectors.groupingBy(
+                        Transaction::getCategory,
+                        Collectors.reducing(BigDecimal.ZERO, Transaction::getAmount, BigDecimal::add)
+                ));
+
+        TransactionsResponseDto resp = new TransactionsResponseDto();
+        resp.transactions = filtered;
+        resp.totalsByCategory = totalsByCategory;
+        return resp;
     }
 
 
