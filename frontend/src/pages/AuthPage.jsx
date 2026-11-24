@@ -39,7 +39,7 @@ export default function AuthPage() {
                         <span className="text-2xl">👨‍👩‍👧</span>
                         <div>
                             <div className="text-sm font-semibold">Shared family space</div>
-                            <div className="text-xs text-white/60">Parent, partner, child</div>
+                            <div className="text-xs text-white/60">Adult, parent, child</div>
                         </div>
                     </div>
                 </div>

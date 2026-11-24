@@ -42,7 +42,16 @@ public class AuthController {
         u.setLastName(request.getLastName());
         u.setEmail(request.getEmail().trim().toLowerCase());
         u.setPassword(encoder.encode(request.getPassword()));
-        u.setRole(Role.valueOf(request.getRole().toUpperCase()));
+        Role role;
+        try {
+            role = Role.valueOf(request.getRole().trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return Map.of("success", false, "message", "Invalid role. Allowed: ADULT, PARENT, CHILD");
+        }
+        if (role == Role.ADMIN) {
+            return Map.of("success", false, "message", "Invalid role. Allowed: ADULT, PARENT, CHILD");
+        }
+        u.setRole(role);
         userRepository.save(u);
 
         return Map.of("success", true, "message", "User registered successfully");

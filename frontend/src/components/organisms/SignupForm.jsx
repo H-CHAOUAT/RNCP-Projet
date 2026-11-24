@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 
 const ROLES = [
     {
-        value: "PARENT",
-        label: "👨‍👩‍👧 Parent",
-        desc: "Main account manager — full access to all budgets, goals and family members",
+        value: "ADULT",
+        label: "🧑 Adult",
+        desc: "Manage your own budget and goals — no household needed",
     },
     {
-        value: "PARTNER",
-        label: "🤝 Partner",
-        desc: "Co-manages finances — same access as Parent, different label",
+        value: "PARENT",
+        label: "👨‍👩‍👧 Parent",
+        desc: "Manage your household — budgets, family goals, children's allowance",
     },
     {
         value: "CHILD",
@@ -21,7 +21,7 @@ const ROLES = [
 
 export default function Signup() {
     const navigate = useNavigate();
-    const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "", role: "PARENT" });
+    const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "", role: "ADULT" });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -82,7 +82,7 @@ export default function Signup() {
 
             <div>
                 <label className="text-xs font-medium text-slate-600 mb-2 block">
-                    Your role in the family *
+                    Your profile *
                 </label>
                 <div className="space-y-2">
                     {ROLES.map(({ value, label, desc }) => (
@@ -100,7 +100,7 @@ export default function Signup() {
                         </button>
                     ))}
                 </div>
-                {form.role !== "PARENT" && (
+                {form.role === "CHILD" && (
                     <p className="mt-2 text-xs text-slate-400">
                         💡 You can join an existing family group in <strong>Settings → Family</strong> using an invite code.
                     </p>

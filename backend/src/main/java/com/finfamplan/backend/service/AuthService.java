@@ -71,7 +71,7 @@ public class AuthService {
             return Role.valueOf(raw.trim().toUpperCase());
         } catch (Exception ex) {
             throw new IllegalArgumentException(
-                    "Invalid role. Allowed: PARENT, PARTNER, CHILD, ADMIN"
+                    "Invalid role. Allowed: ADULT, PARENT, CHILD, ADMIN"
             );
         }
     }

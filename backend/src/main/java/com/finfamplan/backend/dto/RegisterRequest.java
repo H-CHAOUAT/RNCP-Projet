@@ -11,6 +11,6 @@ public class RegisterRequest {
     @NotBlank private String lastName;
     @Email @NotBlank private String email;
     @Size (min = 8) @NotBlank private String password;
-    @NotBlank private String role; // "parent" | "partner" | "child"
+    @NotBlank private String role; // "adult" | "parent" | "child"
 
 }

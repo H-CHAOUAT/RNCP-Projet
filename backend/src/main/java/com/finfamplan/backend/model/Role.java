@@ -1,8 +1,8 @@
 package com.finfamplan.backend.model;
 
 public enum Role {
+    ADULT,
     PARENT,
-    PARTNER,
     CHILD,
     ADMIN
 

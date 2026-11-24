@@ -8,7 +8,7 @@ class RoleTest {
     @Test
     void testEnumValues() {
         assertNotNull(Role.PARENT);
-        assertNotNull(Role.PARTNER);
+        assertNotNull(Role.ADULT);
         assertNotNull(Role.CHILD);
         assertNotNull(Role.ADMIN);
     }

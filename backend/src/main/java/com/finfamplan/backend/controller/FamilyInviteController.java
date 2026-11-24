@@ -168,8 +168,8 @@ public class FamilyInviteController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Recipient not found"));
 
         String role = fromUser.getRole().name();
-        if (!role.equals("PARENT") && !role.equals("PARTNER"))
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only PARENT or PARTNER can send allowances");
+        if (!role.equals("PARENT"))
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only PARENT can send allowances");
 
         if (fromUser.getFamilyGroup() == null || toUser.getFamilyGroup() == null
                 || !fromUser.getFamilyGroup().getId().equals(toUser.getFamilyGroup().getId()))

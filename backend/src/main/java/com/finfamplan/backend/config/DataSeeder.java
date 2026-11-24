@@ -35,6 +35,8 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
+        seedPersonas();
+
         if (userRepo.count() >= 10) return;
 
         String hashed = passwordEncoder.encode("Password1234");
@@ -156,7 +158,7 @@ public class DataSeeder implements CommandLineRunner {
             parent = userRepo.save(parent);
             createFinancialProfile(parent, parentSal, currency, parentBal, expenseProfiles[expIdx]);
 
-            User partner = buildUser(partnerFirstName, familyName, Role.PARTNER, group, hashed);
+            User partner = buildUser(partnerFirstName, familyName, Role.PARENT, group, hashed);
             partner = userRepo.save(partner);
             createFinancialProfile(partner, partnerSal, currency, partnerBal, expenseProfiles[(expIdx + 1) % expenseProfiles.length]);
 
@@ -170,6 +172,54 @@ public class DataSeeder implements CommandLineRunner {
                 createFinancialProfile(child, childSal, currency, childBal, new String[0]);
             }
         }
+    }
+
+    /**
+     * One test account per persona (Marc = ADULT, Elyne = PARENT, Lucas = CHILD).
+     * Idempotent: each account is created only if its email does not exist yet.
+     * Password for all of them: Password1234.
+     */
+    private void seedPersonas() {
+        String hashed = passwordEncoder.encode("Password1234");
+
+        if (!userRepo.existsByEmail("marc@test.com")) {
+            User marc = buildPersona("Marc", "marc@test.com", Role.ADULT, null, hashed);
+            createFinancialProfile(marc, 1900, "EUR", 600,
+                    new String[]{"RENT:650", "BILLS:120", "SUBSCRIPTIONS:45", "TRANSPORT:75"});
+        }
+
+        FamilyGroup elyneFamily = null;
+        if (!userRepo.existsByEmail("elyne@test.com")) {
+            elyneFamily = new FamilyGroup();
+            elyneFamily.setName("Elyne's Family");
+            elyneFamily.setCreatedAt(LocalDateTime.now());
+            elyneFamily.setUpdatedAt(LocalDateTime.now());
+            elyneFamily = familyGroupRepo.save(elyneFamily);
+
+            User elyne = buildPersona("Elyne", "elyne@test.com", Role.PARENT, elyneFamily, hashed);
+            createFinancialProfile(elyne, 2600, "EUR", 1200,
+                    new String[]{"RENT:1100", "BILLS:180", "GROCERIES:450", "TRANSPORT:90", "SUBSCRIPTIONS:60"});
+        }
+
+        if (!userRepo.existsByEmail("lucas@test.com")) {
+            if (elyneFamily == null) {
+                elyneFamily = userRepo.findByEmail("elyne@test.com")
+                        .map(User::getFamilyGroup).orElse(null);
+            }
+            User lucas = buildPersona("Lucas", "lucas@test.com", Role.CHILD, elyneFamily, hashed);
+            createFinancialProfile(lucas, 20, "EUR", 35, new String[0]);
+        }
+    }
+
+    private User buildPersona(String firstName, String email, Role role, FamilyGroup group, String hashed) {
+        User u = new User();
+        u.setFirstName(firstName);
+        u.setLastName("");
+        u.setEmail(email);
+        u.setPassword(hashed);
+        u.setRole(role);
+        u.setFamilyGroup(group);
+        return userRepo.save(u);
     }
 
     private User buildUser(String firstName, String lastName, Role role, FamilyGroup group, String hashed) {

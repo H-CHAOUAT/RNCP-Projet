@@ -154,12 +154,12 @@ export default function FamilyTab() {
     };
 
     const initials = (u) => `${u.firstName?.[0] ?? ""}${u.lastName?.[0] ?? ""}`.toUpperCase() || "?";
-    const roleColor = (r) => ({ PARENT: "bg-wine", PARTNER: "bg-blue-600", CHILD: "bg-green-600" }[r] ?? "bg-slate-400");
+    const roleColor = (r) => ({ PARENT: "bg-wine", ADULT: "bg-blue-600", CHILD: "bg-green-600" }[r] ?? "bg-slate-400");
 
     if (loading) return <div className="rounded-xl border bg-white p-6 text-slate-500">Loading family...</div>;
 
     const familyGroupId = userData?.familyGroup?.id ?? userData?.familyGroupId ?? null;
-    const isParentOrPartner = userRole === "PARENT" || userRole === "PARTNER";
+    const isParent = userRole === "PARENT";
     const otherMembers = members.filter(m => (m.userId ?? m.id) !== userId);
 
     return (
@@ -185,7 +185,7 @@ export default function FamilyTab() {
                 </div>
             )}
 
-            {!familyGroupId && isParentOrPartner && (
+            {!familyGroupId && isParent && (
                 <div className="rounded-xl border bg-white p-6 space-y-4">
                     <div>
                         <h3 className="font-semibold text-slate-900">Create your family group</h3>
@@ -231,7 +231,7 @@ export default function FamilyTab() {
                         <div>
                             <label className="text-xs font-medium text-slate-600 mb-1 block">Your role</label>
                             <select className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#72383D]" value={joinRole} onChange={e => setJoinRole(e.target.value)}>
-                                <option value="PARTNER">Partner</option>
+                                <option value="PARENT">Parent</option>
                                 <option value="CHILD">Child</option>
                             </select>
                         </div>
@@ -242,7 +242,7 @@ export default function FamilyTab() {
                 </div>
             )}
 
-            {isParentOrPartner && familyGroupId && (
+            {isParent && familyGroupId && (
                 <div className="rounded-xl border bg-white p-6 space-y-4">
                     <div>
                         <h3 className="font-semibold text-slate-900">Invite a family member</h3>
@@ -264,7 +264,7 @@ export default function FamilyTab() {
                 </div>
             )}
 
-            {isParentOrPartner && familyGroupId && otherMembers.length > 0 && (
+            {isParent && familyGroupId && otherMembers.length > 0 && (
                 <div className="rounded-xl border bg-white p-6 space-y-4">
                     <div>
                         <h3 className="font-semibold text-slate-900">Send allowance</h3>
@@ -304,7 +304,7 @@ export default function FamilyTab() {
                 </div>
             )}
 
-            {isParentOrPartner && familyGroupId && familyGoals.length > 0 && (
+            {isParent && familyGroupId && familyGoals.length > 0 && (
                 <div className="rounded-xl border bg-white p-6 space-y-4">
                     <h3 className="font-semibold text-slate-900">Family goals</h3>
                     <div className="space-y-3">
