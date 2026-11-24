@@ -4,6 +4,7 @@ import com.finfamplan.backend.dto.*;
 import com.finfamplan.backend.model.*;
 import com.finfamplan.backend.repository.*;
 import com.finfamplan.backend.security.AccessGuard;
+import com.finfamplan.backend.service.PaydayService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -14,7 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.YearMonth;
+import java.time.Period;
 import java.util.List;
 
 @RestController
@@ -26,19 +27,22 @@ public class GoalController {
     private final UserRepository userRepo;
     private final FinancialProfileRepository financialRepo;
     private final AccessGuard accessGuard;
+    private final PaydayService paydayService;
 
     public GoalController(
             GoalRepository goalRepo,
             GoalContributionRepository contribRepo,
             UserRepository userRepo,
             FinancialProfileRepository financialRepo,
-            AccessGuard accessGuard
+            AccessGuard accessGuard,
+            PaydayService paydayService
     ) {
         this.goalRepo = goalRepo;
         this.contribRepo = contribRepo;
         this.userRepo = userRepo;
         this.financialRepo = financialRepo;
         this.accessGuard = accessGuard;
+        this.paydayService = paydayService;
     }
 
     @GetMapping("/user/{userId}")
@@ -192,8 +196,7 @@ public class GoalController {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Profil financier manquant"));
 
         String currency = fp.getCurrency() != null ? fp.getCurrency() : "EUR";
-        int paydayDay = fp.getPaydayDay() != null ? fp.getPaydayDay() : 1;
-        paydayDay = Math.max(1, Math.min(28, paydayDay));
+        int paydayDay = paydayService.clampPaydayDay(fp.getPaydayDay());
 
         BigDecimal target = nz(goal.getTargetAmount());
         BigDecimal current = nz(goal.getCurrentAmount());
@@ -207,8 +210,8 @@ public class GoalController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La date limite est déjà passée");
         }
 
-        LocalDate nextPayday = computeNextPayday(today, paydayDay);
-        int paydaysToDeadline = countPaydaysInclusive(nextPayday, deadline, paydayDay);
+        LocalDate nextPayday = paydayService.computeNextPayday(today, paydayDay);
+        int paydaysToDeadline = paydayService.countPaydaysInclusive(nextPayday, deadline, paydayDay);
 
         if (paydaysToDeadline <= 0) paydaysToDeadline = 1;
 
@@ -259,6 +262,9 @@ public class GoalController {
         dto.planAmountPerPayday = g.getPlanAmountPerPayday();
         dto.remainingAmount = nz(g.getTargetAmount()).subtract(nz(g.getCurrentAmount())).max(BigDecimal.ZERO);
 
+        computeEffort(g, dto);
+        dto.horizon = computeHorizon(g.getDeadline());
+
         if (g.getCreatedBy() != null) {
             String fn = g.getCreatedBy().getFirstName() != null ? g.getCreatedBy().getFirstName() : "";
             String ln = g.getCreatedBy().getLastName() != null ? g.getCreatedBy().getLastName() : "";
@@ -269,29 +275,57 @@ public class GoalController {
         return dto;
     }
 
+    /**
+     * Story 8: a monthly ("per payday") savings effort shown permanently on
+     * every goal, not just once at creation time. Same formula as
+     * suggestions()'s "On time" plan, but degrades to a clear reason instead
+     * of throwing, since this runs for every goal in a list.
+     */
+    private void computeEffort(Goal g, GoalViewDto dto) {
+        if (g.getDeadline() == null) {
+            dto.monthlyEffort = null;
+            dto.effortUnavailableReason = "Aucune date limite définie";
+            return;
+        }
+
+        LocalDate today = LocalDate.now();
+        if (g.getDeadline().isBefore(today)) {
+            dto.monthlyEffort = null;
+            dto.effortUnavailableReason = "La date limite est déjà passée";
+            return;
+        }
+
+        financialRepo.findByUser_UserId(g.getUser().getUserId()).ifPresentOrElse(fp -> {
+            int paydayDay = paydayService.clampPaydayDay(fp.getPaydayDay());
+            BigDecimal remaining = nz(g.getTargetAmount()).subtract(nz(g.getCurrentAmount())).max(BigDecimal.ZERO);
+
+            LocalDate nextPayday = paydayService.computeNextPayday(today, paydayDay);
+            int n = paydayService.countPaydaysInclusive(nextPayday, g.getDeadline(), paydayDay);
+            if (n <= 0) n = 1;
+
+            dto.monthlyEffort = remaining.divide(BigDecimal.valueOf(n), 2, RoundingMode.CEILING);
+            dto.effortUnavailableReason = null;
+        }, () -> {
+            dto.monthlyEffort = null;
+            dto.effortUnavailableReason = "Profil financier manquant";
+        });
+    }
+
+    /**
+     * Story 9: horizon is derived from the deadline, never stored or chosen
+     * by the user — the deadline is mandatory on every goal, so there is no
+     * "no deadline" case to handle. Thresholds are a documented assumption:
+     * <=12 months = short term, <=36 months = medium term, beyond = long term.
+     */
+    private String computeHorizon(LocalDate deadline) {
+        if (deadline == null) return null;
+        long months = Period.between(LocalDate.now(), deadline).toTotalMonths();
+        if (months < 6) return "SHORT";
+        if (months <= 18) return "MEDIUM";
+        return "LONG";
+    }
+
     private BigDecimal nz(BigDecimal v) {
         return v != null ? v : BigDecimal.ZERO;
-    }
-
-    private LocalDate computeNextPayday(LocalDate today, int paydayDay) {
-
-        YearMonth ym = YearMonth.from(today);
-        LocalDate thisMonth = LocalDate.of(ym.getYear(), ym.getMonth(), paydayDay);
-        if (!today.isAfter(thisMonth)) return thisMonth;
-
-        YearMonth next = ym.plusMonths(1);
-        return LocalDate.of(next.getYear(), next.getMonth(), paydayDay);
-    }
-
-    private int countPaydaysInclusive(LocalDate firstPayday, LocalDate deadline, int paydayDay) {
-        int count = 0;
-        LocalDate cursor = firstPayday;
-
-        while (!cursor.isAfter(deadline)) {
-            count++;
-            YearMonth ym = YearMonth.from(cursor).plusMonths(1);
-            cursor = LocalDate.of(ym.getYear(), ym.getMonth(), paydayDay);
-        }
-        return count;
     }
 }

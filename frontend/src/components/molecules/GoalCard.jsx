@@ -8,6 +8,13 @@ const money = (n, currency = "EUR") => {
     }
 };
 
+const HORIZON_LABELS = { SHORT: "Court terme", MEDIUM: "Moyen terme", LONG: "Long terme" };
+const HORIZON_COLORS = {
+    SHORT: "bg-emerald-100 text-emerald-700",
+    MEDIUM: "bg-amber-100 text-amber-700",
+    LONG: "bg-sky-100 text-sky-700",
+};
+
 export default function GoalCard({ goal, currency = "EUR" }) {
     const pct =
         goal.targetAmount > 0 ? Math.min(100, (goal.currentAmount / goal.targetAmount) * 100) : 0;
@@ -17,7 +24,14 @@ export default function GoalCard({ goal, currency = "EUR" }) {
         <div className="rounded-lg border p-4">
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <div className="font-semibold text-dark">{goal.title}</div>
+                    <div className="flex items-center gap-2">
+                        <div className="font-semibold text-dark">{goal.title}</div>
+                        {goal.horizon ? (
+                            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${HORIZON_COLORS[goal.horizon] ?? "bg-slate-100 text-slate-600"}`}>
+                                {HORIZON_LABELS[goal.horizon] ?? goal.horizon}
+                            </span>
+                        ) : null}
+                    </div>
 
                     {goal.description ? (
                         <div className="text-sm text-dark/50 mt-1">{goal.description}</div>
@@ -33,6 +47,14 @@ export default function GoalCard({ goal, currency = "EUR" }) {
                         <div className="mt-1 text-xs font-medium text-wine">
                             Plan : {goal.planLabel} — {money(goal.planAmountPerPayday, currency)}/paie
                         </div>
+                    ) : null}
+
+                    {goal.monthlyEffort != null ? (
+                        <div className="mt-1 text-xs font-medium text-slate-700">
+                            Effort nécessaire : {money(goal.monthlyEffort, currency)}/paie pour tenir l'échéance
+                        </div>
+                    ) : goal.effortUnavailableReason ? (
+                        <div className="mt-1 text-xs text-slate-400">{goal.effortUnavailableReason}</div>
                     ) : null}
                 </div>
 

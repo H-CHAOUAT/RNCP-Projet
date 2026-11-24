@@ -19,6 +19,13 @@ public class GoalViewDto {
     public BigDecimal planAmountPerPayday;
     public BigDecimal remainingAmount;
 
+    // Story 8: savings effort, always computed, not just at creation.
+    public BigDecimal monthlyEffort;
+    public String effortUnavailableReason;
+
+    // Story 9: derived from deadline, never stored/chosen — SHORT/MEDIUM/LONG.
+    public String horizon;
+
     public Long userId;
     public Long createdByUserId;
     public String createdByName;
