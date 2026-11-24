@@ -8,6 +8,8 @@ import com.finfamplan.backend.model.User;
 import com.finfamplan.backend.repository.FinancialProfileRepository;
 import com.finfamplan.backend.repository.TransactionRepository;
 import com.finfamplan.backend.repository.UserRepository;
+import com.finfamplan.backend.security.AccessGuard;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -17,21 +19,23 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/financial")
-@CrossOrigin(origins = "*")
 public class FinancialProfileController {
 
     private final FinancialProfileRepository financialRepo;
     private final UserRepository             userRepo;
     private final TransactionRepository      txRepo;
+    private final AccessGuard                accessGuard;
 
     public FinancialProfileController(FinancialProfileRepository f,
                                       UserRepository u,
-                                      TransactionRepository t) {
-        financialRepo = f; userRepo = u; txRepo = t;
+                                      TransactionRepository t,
+                                      AccessGuard accessGuard) {
+        financialRepo = f; userRepo = u; txRepo = t; this.accessGuard = accessGuard;
     }
 
     @GetMapping("/{userId}")
-    public FinancialProfileDto get(@PathVariable Long userId) {
+    public FinancialProfileDto get(@PathVariable Long userId, HttpServletRequest request) {
+        accessGuard.requireSelf(request, userId);
         FinancialProfile profile = financialRepo.findByUser_UserId(userId)
                 .orElseGet(() -> createDefault(userId));
 
@@ -45,7 +49,9 @@ public class FinancialProfileController {
 
     @PutMapping("/{userId}")
     public FinancialProfileDto upsert(@PathVariable Long userId,
-                                      @RequestBody FinancialProfileDto dto) {
+                                      @RequestBody FinancialProfileDto dto,
+                                      HttpServletRequest request) {
+        accessGuard.requireSelf(request, userId);
         User user = userRepo.findById(userId).orElseThrow();
         FinancialProfile profile = financialRepo.findByUser_UserId(userId)
                 .orElseGet(() -> createDefault(userId));
@@ -92,7 +98,8 @@ public class FinancialProfileController {
      * → Clear pending flag
      */
     @PostMapping("/{userId}/confirm-salary")
-    public FinancialProfileDto confirmSalary(@PathVariable Long userId) {
+    public FinancialProfileDto confirmSalary(@PathVariable Long userId, HttpServletRequest request) {
+        accessGuard.requireSelf(request, userId);
         User user = userRepo.findById(userId).orElseThrow();
         FinancialProfile profile = financialRepo.findByUser_UserId(userId).orElseThrow();
 
@@ -150,7 +157,8 @@ public class FinancialProfileController {
      * User says they haven't received salary yet — remind again tomorrow.
      */
     @PostMapping("/{userId}/dismiss-salary")
-    public Map<String, Object> dismissSalary(@PathVariable Long userId) {
+    public Map<String, Object> dismissSalary(@PathVariable Long userId, HttpServletRequest request) {
+        accessGuard.requireSelf(request, userId);
         FinancialProfile profile = financialRepo.findByUser_UserId(userId).orElseThrow();
         profile.setLastSalaryDismissedDate(LocalDate.now());
         profile.setSalaryPendingConfirmation(false);

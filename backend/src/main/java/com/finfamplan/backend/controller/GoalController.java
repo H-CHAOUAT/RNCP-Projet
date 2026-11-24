@@ -3,6 +3,8 @@ package com.finfamplan.backend.controller;
 import com.finfamplan.backend.dto.*;
 import com.finfamplan.backend.model.*;
 import com.finfamplan.backend.repository.*;
+import com.finfamplan.backend.security.AccessGuard;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,21 +25,25 @@ public class GoalController {
     private final GoalContributionRepository contribRepo;
     private final UserRepository userRepo;
     private final FinancialProfileRepository financialRepo;
+    private final AccessGuard accessGuard;
 
     public GoalController(
             GoalRepository goalRepo,
             GoalContributionRepository contribRepo,
             UserRepository userRepo,
-            FinancialProfileRepository financialRepo
+            FinancialProfileRepository financialRepo,
+            AccessGuard accessGuard
     ) {
         this.goalRepo = goalRepo;
         this.contribRepo = contribRepo;
         this.userRepo = userRepo;
         this.financialRepo = financialRepo;
+        this.accessGuard = accessGuard;
     }
 
     @GetMapping("/user/{userId}")
-    public List<GoalViewDto> list(@PathVariable Long userId) {
+    public List<GoalViewDto> list(@PathVariable Long userId, HttpServletRequest request) {
+        accessGuard.requireSelf(request, userId);
         return goalRepo.findByUser_UserId(userId)
                 .stream()
                 .map(this::toViewDto)
@@ -45,7 +51,12 @@ public class GoalController {
     }
 
     @GetMapping("/family/{familyGroupId}")
-    public List<GoalViewDto> listByFamily(@PathVariable Long familyGroupId) {
+    public List<GoalViewDto> listByFamily(@PathVariable Long familyGroupId, HttpServletRequest request) {
+        User caller = userRepo.findById(accessGuard.currentUserId(request))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Please log in again"));
+        if (caller.getFamilyGroup() == null || !caller.getFamilyGroup().getId().equals(familyGroupId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Not your family group");
+        }
         return goalRepo.findByUser_FamilyGroup_Id(familyGroupId)
                 .stream()
                 .map(this::toViewDto)
@@ -53,7 +64,9 @@ public class GoalController {
     }
 
     @PostMapping("/user/{userId}")
-    public GoalViewDto create(@PathVariable Long userId, @RequestBody @Valid CreateGoalRequest req) {
+    public GoalViewDto create(@PathVariable Long userId, @RequestBody @Valid CreateGoalRequest req,
+                              HttpServletRequest request) {
+        accessGuard.requireSelf(request, userId);
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -75,7 +88,8 @@ public class GoalController {
 
     @DeleteMapping("/{goalId}/user/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long goalId, @PathVariable Long userId) {
+    public void delete(@PathVariable Long goalId, @PathVariable Long userId, HttpServletRequest request) {
+        accessGuard.requireSelf(request, userId);
         Goal goal = goalRepo.findById(goalId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Goal not found"));
 
@@ -92,8 +106,10 @@ public class GoalController {
     public GoalViewDto contribute(
             @PathVariable Long goalId,
             @PathVariable Long userId,
-            @RequestBody @Valid ContributeRequest req
+            @RequestBody @Valid ContributeRequest req,
+            HttpServletRequest request
     ) {
+        accessGuard.requireSelf(request, userId);
         if (req.amount == null || req.amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Amount must be > 0");
         }
@@ -134,7 +150,9 @@ public class GoalController {
     }
 
         @GetMapping("/{goalId}/suggestions/user/{userId}")
-    public GoalSuggestionsResponseDto suggestions(@PathVariable Long goalId, @PathVariable Long userId) {
+    public GoalSuggestionsResponseDto suggestions(@PathVariable Long goalId, @PathVariable Long userId,
+                                                  HttpServletRequest request) {
+        accessGuard.requireSelf(request, userId);
 
         Goal goal = goalRepo.findById(goalId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Goal not found"));

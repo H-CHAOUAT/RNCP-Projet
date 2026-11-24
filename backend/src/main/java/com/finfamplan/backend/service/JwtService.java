@@ -44,6 +44,17 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
+    /**
+     * The authenticated user's numeric id, embedded as a claim at login.
+     * Controllers use this instead of trusting a userId from the URL/body,
+     * to avoid IDOR (one user acting on another user's data).
+     * Returns null for a token issued before this claim existed.
+     */
+    public Long extractUserId(String token) {
+        Object raw = extractClaim(token, claims -> claims.get("userId"));
+        return raw instanceof Number number ? number.longValue() : null;
+    }
+
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);

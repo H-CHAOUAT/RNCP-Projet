@@ -7,6 +7,8 @@ import com.finfamplan.backend.repository.BillRepository;
 import com.finfamplan.backend.repository.FinancialProfileRepository;
 import com.finfamplan.backend.repository.TransactionRepository;
 import com.finfamplan.backend.repository.UserRepository;
+import com.finfamplan.backend.security.AccessGuard;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,14 +26,17 @@ public class BillController {
     private final UserRepository             userRepo;
     private final TransactionRepository      txRepo;
     private final FinancialProfileRepository fpRepo;
+    private final AccessGuard                accessGuard;
 
     public BillController(BillRepository b, UserRepository u,
-                          TransactionRepository t, FinancialProfileRepository f) {
-        billRepo = b; userRepo = u; txRepo = t; fpRepo = f;
+                          TransactionRepository t, FinancialProfileRepository f,
+                          AccessGuard accessGuard) {
+        billRepo = b; userRepo = u; txRepo = t; fpRepo = f; this.accessGuard = accessGuard;
     }
 
     @GetMapping("/user/{userId}")
-    public List<Map<String, Object>> getBills(@PathVariable Long userId) {
+    public List<Map<String, Object>> getBills(@PathVariable Long userId, HttpServletRequest request) {
+        accessGuard.requireSelf(request, userId);
         return billRepo.findByUser_UserIdOrderByDueDateAsc(userId)
                 .stream().map(this::toMap).toList();
     }
@@ -39,7 +44,9 @@ public class BillController {
     @PostMapping("/user/{userId}")
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Object> createBill(@PathVariable Long userId,
-                                          @RequestBody Map<String, Object> body) {
+                                          @RequestBody Map<String, Object> body,
+                                          HttpServletRequest request) {
+        accessGuard.requireSelf(request, userId);
         User user = userRepo.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -74,9 +81,15 @@ public class BillController {
 
     @PatchMapping("/{id}/paid")
     public Map<String, Object> togglePaid(@PathVariable Long id,
-                                          @RequestBody Map<String, Object> body) {
+                                          @RequestBody Map<String, Object> body,
+                                          HttpServletRequest request) {
         Bill bill = billRepo.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bill not found"));
+
+        if (bill.getUser() == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Bill has no associated user");
+        }
+        accessGuard.requireSelf(request, bill.getUser().getUserId());
 
         boolean wasPaid = Boolean.TRUE.equals(bill.getPaid());
         boolean nowPaid = body.get("paid") != null

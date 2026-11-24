@@ -4,6 +4,8 @@ import com.finfamplan.backend.model.Transaction;
 import com.finfamplan.backend.model.User;
 import com.finfamplan.backend.repository.TransactionRepository;
 import com.finfamplan.backend.repository.UserRepository;
+import com.finfamplan.backend.security.AccessGuard;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,15 +21,19 @@ public class TransactionController {
 
     private final TransactionRepository transactionRepository;
     private final UserRepository userRepository;
+    private final AccessGuard accessGuard;
 
     public TransactionController(TransactionRepository transactionRepository,
-                                 UserRepository userRepository) {
+                                 UserRepository userRepository,
+                                 AccessGuard accessGuard) {
         this.transactionRepository = transactionRepository;
         this.userRepository = userRepository;
+        this.accessGuard = accessGuard;
     }
 
     @GetMapping("/user/{userId}")
-    public List<Transaction> getTransactions(@PathVariable Long userId) {
+    public List<Transaction> getTransactions(@PathVariable Long userId, HttpServletRequest request) {
+        accessGuard.requireSelf(request, userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -43,8 +49,10 @@ public class TransactionController {
     @PostMapping("/user/{userId}")
     public Transaction createTransaction(
             @PathVariable Long userId,
-            @RequestBody Map<String, Object> body
+            @RequestBody Map<String, Object> body,
+            HttpServletRequest request
     ) {
+        accessGuard.requireSelf(request, userId);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 

@@ -62,7 +62,9 @@ public class AuthController {
         return userRepository.findByEmail(request.getEmail().trim().toLowerCase())
                 .map(user -> {
                     if (encoder.matches(request.getPassword(), user.getPassword())) {
-                        String token = jwtService.generateToken(user);
+                        Map<String, Object> claims = new HashMap<>();
+                        claims.put("userId", user.getUserId());
+                        String token = jwtService.generateToken(claims, user);
 
                         Map<String, Object> userMap = new HashMap<>();
                         userMap.put("id", user.getUserId());
