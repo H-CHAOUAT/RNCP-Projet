@@ -29,7 +29,7 @@ export default function DashboardPage() {
     const [loading, setLoading] = useState(true);
     const [financial, setFinancial] = useState(null);
     const [goals, setGoals] = useState([]);
-    const [bills, setBills] = useState([]);
+    const [, setBills] = useState([]);
     const [forecast, setForecast] = useState(null);
     const [salaryPending, setSalaryPending] = useState(false);
     const [confirmingSalary, setConfirmingSalary] = useState(false);
@@ -157,8 +157,11 @@ export default function DashboardPage() {
     const lastSalaryApplied = financial?.lastSalaryApplied ?? null;
     const fixedExpenses = financial?.expenses ?? [];
     const fixedExpensesTotal = fixedExpenses.reduce((s, e) => s + Number(e.amount ?? 0), 0);
-    const unpaidBillsTotal = bills.filter((b) => !b.paid).reduce((s, b) => s + Number(b.amount ?? 0), 0);
-    const available = currentBalance - unpaidBillsTotal;
+    // "Reste à vivre" — revenu moins charges fixes moins autres dépenses du mois,
+    // calculé une seule fois côté backend (BudgetService) pour que cette carte et
+    // la pastille du footer ne puissent plus diverger. Ce n'est PAS "Solde total"
+    // moins factures impayées (ancien bug) : les deux notions sont distinctes.
+    const available = financial?.monthlyRemaining != null ? Number(financial.monthlyRemaining) : 0;
 
     const currentGoal = goals[goalIdx] ?? null;
     const goalPct =
@@ -230,11 +233,7 @@ export default function DashboardPage() {
                 <StatCard
                     label="Disponible ce mois-ci"
                     value={money(available, currency)}
-                    sub={
-                        unpaidBillsTotal > 0
-                            ? `Après ${money(unpaidBillsTotal, currency)} de factures impayées`
-                            : "Toutes les factures sont payées ✓"
-                    }
+                    sub="Revenus moins charges fixes et dépenses du mois"
                     color={available >= 0 ? "bg-emerald-600" : "bg-red-500"}
                     onClick={() => navigate("/financial?tab=analysis")}
                 />

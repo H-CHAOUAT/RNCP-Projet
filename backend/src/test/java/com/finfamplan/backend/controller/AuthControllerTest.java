@@ -49,7 +49,7 @@ class AuthControllerTest {
         Map<String, Object> res = authController.register(req);
 
         assertTrue((Boolean) res.get("success"));
-        assertEquals("User registered successfully", res.get("message"));
+        assertEquals("Compte créé avec succès", res.get("message"));
         verify(userRepository).save(any(User.class));
     }
 
@@ -65,7 +65,7 @@ class AuthControllerTest {
         Map<String, Object> res = authController.register(req);
 
         assertFalse((Boolean) res.get("success"));
-        assertEquals("Email already exists", res.get("message"));
+        assertEquals("Cet e-mail est déjà utilisé", res.get("message"));
         verify(userRepository, never()).save(any());
     }
 
@@ -79,7 +79,7 @@ class AuthControllerTest {
         Map<String, Object> res = authController.register(req);
 
         assertFalse((Boolean) res.get("success"));
-        assertEquals("Password must be at least 8 characters", res.get("message"));
+        assertEquals("Le mot de passe doit contenir au moins 8 caractères", res.get("message"));
         verify(userRepository, never()).save(any());
     }
 

@@ -14,6 +14,7 @@ public class FinancialProfileDto {
     public Boolean salaryPendingConfirmation;
     public LocalDate lastSalaryDismissedDate;
     public BigDecimal alertThreshold;
+    public BigDecimal monthlyRemaining; // "reste à vivre": income - fixed expenses - other expenses this month
     public List<ExpenseItemDto> expenses;
 
     public static class ExpenseItemDto {

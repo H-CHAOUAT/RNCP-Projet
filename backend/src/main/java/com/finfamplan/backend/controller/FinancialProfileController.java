@@ -11,12 +11,14 @@ import com.finfamplan.backend.repository.FinancialProfileRepository;
 import com.finfamplan.backend.repository.TransactionRepository;
 import com.finfamplan.backend.repository.UserRepository;
 import com.finfamplan.backend.security.AccessGuard;
+import com.finfamplan.backend.service.BudgetService;
 import com.finfamplan.backend.service.ForecastService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -29,14 +31,17 @@ public class FinancialProfileController {
     private final TransactionRepository      txRepo;
     private final AccessGuard                accessGuard;
     private final ForecastService            forecastService;
+    private final BudgetService              budgetService;
 
     public FinancialProfileController(FinancialProfileRepository f,
                                       UserRepository u,
                                       TransactionRepository t,
                                       AccessGuard accessGuard,
-                                      ForecastService forecastService) {
+                                      ForecastService forecastService,
+                                      BudgetService budgetService) {
         financialRepo = f; userRepo = u; txRepo = t; this.accessGuard = accessGuard;
         this.forecastService = forecastService;
+        this.budgetService = budgetService;
     }
 
     /**
@@ -76,7 +81,7 @@ public class FinancialProfileController {
             financialRepo.save(profile);
         }
 
-        return toDto(profile);
+        return toDto(profile, userId);
     }
 
     @PutMapping("/{userId}")
@@ -121,7 +126,7 @@ public class FinancialProfileController {
         }
 
         checkPaydayPending(profile);
-        return toDto(financialRepo.save(profile));
+        return toDto(financialRepo.save(profile), userId);
     }
 
     /**
@@ -185,7 +190,7 @@ public class FinancialProfileController {
             } catch (Exception ignored) {
             }
         }
-        return toDto(financialRepo.save(profile));
+        return toDto(financialRepo.save(profile), userId);
     }
 
     /**
@@ -249,7 +254,7 @@ public class FinancialProfileController {
         return financialRepo.save(fp);
     }
 
-    private FinancialProfileDto toDto(FinancialProfile p) {
+    private FinancialProfileDto toDto(FinancialProfile p, Long userId) {
         FinancialProfileDto dto = new FinancialProfileDto();
         dto.monthlyIncome = p.getMonthlyIncome();
         dto.currency = p.getCurrency();
@@ -267,6 +272,17 @@ public class FinancialProfileController {
             ed.amount = e.getAmount();
             return ed;
         }).toList();
+
+        BigDecimal fixedExpensesTotal = p.getExpenses().stream()
+                .map(ExpenseItem::getAmount)
+                .filter(a -> a != null)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        dto.monthlyRemaining = budgetService.monthlyRemaining(
+                p.getMonthlyIncome(),
+                fixedExpensesTotal,
+                txRepo.findByUser_UserIdOrderByDateDesc(userId),
+                YearMonth.now()
+        );
 
         return dto;
     }
