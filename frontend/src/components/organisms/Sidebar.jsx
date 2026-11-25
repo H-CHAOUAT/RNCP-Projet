@@ -1,6 +1,7 @@
 import { useState } from "react";
 import useFamilyMembers from "../../hooks/useFamilyMembers";
 import { roleLabel } from "../../constants/labels";
+import { logout } from "../../api/session";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import Logo from "../atoms/Logo";
 import CreateBillModal from "./bills/CreateBillModal";
@@ -23,8 +24,7 @@ export default function Sidebar({ open, onClose }) {
   const family = useFamilyMembers();
 
   const handleLogout = () => {
-    localStorage.removeItem("user");
-    sessionStorage.removeItem("token");
+    logout();
     navigate("/login");
   };
 

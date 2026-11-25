@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import UserMenu from "../molecules/UserMenu";
 
 export default function Topbar({ onMenuClick }) {
     const [userName, setUserName] = useState("");
@@ -42,13 +43,7 @@ export default function Topbar({ onMenuClick }) {
                     <div className="text-xl font-bold text-dark">{title}</div>
                     {subtitle && <div className="text-xs text-dark/50">{subtitle}</div>}
                 </div>
-                <NavLink to="/settings/personal"
-                         className="ml-auto flex items-center gap-2 rounded-xl px-3 py-1.5 hover:bg-winePale transition">
-                    <span className="hidden md:block text-sm font-medium text-dark">{userName || "—"}</span>
-                    <div className="h-9 w-9 rounded-full bg-wine flex items-center justify-center text-white font-semibold text-sm">
-                        {initials}
-                    </div>
-                </NavLink>
+                <UserMenu userName={userName} initials={initials} />
             </div>
         </header>
     );
