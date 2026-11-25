@@ -45,13 +45,13 @@ export default function GoalCard({ goal, currency = "EUR" }) {
 
                     {goal.planLabel ? (
                         <div className="mt-1 text-xs font-medium text-wine">
-                            Plan : {goal.planLabel} — {money(goal.planAmountPerPayday, currency)}/paie
+                            Plan : {goal.planLabel} — {money(goal.planAmountPerPayday, currency)}/mois
                         </div>
                     ) : null}
 
                     {goal.monthlyEffort != null ? (
                         <div className="mt-1 text-xs font-medium text-slate-700">
-                            Effort nécessaire : {money(goal.monthlyEffort, currency)}/paie pour tenir l'échéance
+                            Effort nécessaire : {money(goal.monthlyEffort, currency)}/mois pour tenir l'échéance
                         </div>
                     ) : goal.effortUnavailableReason ? (
                         <div className="mt-1 text-xs text-slate-400">{goal.effortUnavailableReason}</div>

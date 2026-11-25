@@ -222,7 +222,7 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                             <div>
                                 <h2 className="text-xl font-semibold text-slate-900">Choisissez un plan d'épargne</h2>
                                 <p className="text-sm text-slate-500 mt-0.5">
-                                    Basé sur votre jour de paie et ce qu'il reste à épargner pour « {createdGoal?.title} ».
+                                    Basé sur votre jour de réception du salaire et ce qu'il reste à épargner pour « {createdGoal?.title} ».
                                 </p>
                             </div>
                             <button onClick={handleClose} className="rounded-md p-2 hover:bg-slate-100 text-slate-400">✕</button>
@@ -242,7 +242,7 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                             <div className="space-y-3">
                                 <div className="text-xs text-slate-500">
                                     {money(suggestions.remainingAmount, suggestions.currency)} restant à épargner,
-                                    {" "}{suggestions.paydaysToDeadline} paie{suggestions.paydaysToDeadline !== 1 ? "s" : ""} restante{suggestions.paydaysToDeadline !== 1 ? "s" : ""}.
+                                    {" "}{suggestions.paydaysToDeadline} mois restant{suggestions.paydaysToDeadline !== 1 ? "s" : ""}.
                                 </div>
                                 <div className="grid grid-cols-3 gap-2">
                                     {suggestions.suggestions.map((s) => {
@@ -259,7 +259,7 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                                                 }`}
                                             >
                                                 <div className={`text-xs mb-1 ${isSelected ? "text-red-100" : "text-slate-500"}`}>{s.label}</div>
-                                                <div className="text-base font-bold">{money(s.amountPerPayday, suggestions.currency)}/paie</div>
+                                                <div className="text-base font-bold">{money(s.amountPerPayday, suggestions.currency)}/mois</div>
                                                 <div className={`text-xs mt-1 ${isSelected ? "text-red-200" : "text-slate-400"}`}>{s.note}</div>
                                             </button>
                                         );

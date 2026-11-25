@@ -225,7 +225,7 @@ public class GoalController {
         onTime.label = "Dans les temps";
         onTime.amountPerPayday = base;
         onTime.paydaysToDeadline = paydaysToDeadline;
-        onTime.note = "Montant recommandé à chaque paie pour atteindre la date limite.";
+        onTime.note = "Montant recommandé chaque mois pour atteindre la date limite.";
 
         GoalSuggestionDto aggressive = new GoalSuggestionDto();
         aggressive.label = "Rapide (+20%)";
