@@ -2,6 +2,7 @@ package com.finfamplan.backend.controller;
 
 import com.finfamplan.backend.model.FamilyGroup;
 import com.finfamplan.backend.model.Transaction;
+import com.finfamplan.backend.model.Role;
 import com.finfamplan.backend.model.User;
 import com.finfamplan.backend.repository.FinancialProfileRepository;
 import com.finfamplan.backend.repository.FamilyGroupRepository;
@@ -59,6 +60,10 @@ public class FamilyInviteController {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
+        if (user.getRole() != Role.PARENT) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Seul un parent peut inviter un membre");
+        }
+
         if (user.getFamilyGroup() == null) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Vous n'appartenez à aucun foyer pour l'instant. Créez-en un d'abord.");
@@ -92,6 +97,15 @@ public class FamilyInviteController {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
 
+        Role role = switch (roleStr) {
+            case "PARENT" -> Role.PARENT;
+            case "CHILD" -> Role.CHILD;
+            default -> throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rôle invalide. Autorisés : PARENT, CHILD");
+        };
+
+        if (user.getFamilyGroup() != null)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vous avez déjà un foyer");
+
         var rows = jdbc.queryForList(
                 "SELECT id, family_group_id, used FROM family_invite_codes WHERE code = ?", code
         );
@@ -114,13 +128,7 @@ public class FamilyInviteController {
         FamilyGroup group = familyGroupRepository.findById(familyGroupId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Foyer introuvable"));
 
-        try {
-            com.finfamplan.backend.model.Role role = com.finfamplan.backend.model.Role.valueOf(roleStr);
-            user.setRole(role);
-        } catch (IllegalArgumentException e) {
-            user.setRole(com.finfamplan.backend.model.Role.CHILD);
-        }
-
+        user.setRole(role);
         user.setFamilyGroup(group);
         userRepository.save(user);
 
@@ -142,6 +150,9 @@ public class FamilyInviteController {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
+
+        if (user.getRole() != Role.PARENT)
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Seul un parent peut créer un foyer");
 
         if (user.getFamilyGroup() != null)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vous avez déjà un foyer");

@@ -105,41 +105,6 @@ public class UserController {
         return Map.of("message", "Toutes les sessions ont été fermées. Reconnectez-vous sur chaque appareil.");
     }
 
-    @PostMapping("/family/invite")
-    public Map<String, Object> inviteToFamily(@RequestBody Map<String, Object> body, HttpServletRequest request) {
-        Long inviterUserId = Long.valueOf(body.get("inviterUserId").toString());
-        accessGuard.requireSelf(request, inviterUserId);
-        String email = body.get("email").toString().trim().toLowerCase();
-        String roleStr = body.get("role").toString().toUpperCase();
-
-        User inviter = userRepository.findById(inviterUserId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur invitant introuvable"));
-
-        if (inviter.getFamilyGroup() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vous n'appartenez à aucun foyer");
-        }
-
-        User invitee = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Aucun compte trouvé pour l'adresse " + email + ". Cette personne doit d'abord s'inscrire."));
-
-        invitee.setFamilyGroup(inviter.getFamilyGroup());
-
-        try {
-            com.finfamplan.backend.model.Role role = com.finfamplan.backend.model.Role.valueOf(roleStr);
-            invitee.setRole(role);
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Rôle invalide : " + roleStr);
-        }
-
-        userRepository.save(invitee);
-
-        return Map.of(
-                "success", true,
-                "message", invitee.getFirstName() + " " + invitee.getLastName() + " a été ajouté(e) à votre foyer."
-        );
-    }
-
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id, HttpServletRequest request) {
         accessGuard.requireSelf(request, id);
