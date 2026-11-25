@@ -207,7 +207,7 @@ function AnalysisTab({ userId }) {
 
                 {expenses.length === 0 ? (
                     <p className="text-sm text-dark/40">
-                        Aucune dépense ajoutée pour l'instant — allez dans l'onglet Dépenses pour en ajouter.
+                        Aucune dépense ajoutée pour l'instant — ajoutez-en dans la vue d'ensemble.
                     </p>
                 ) : (
                     <div className="space-y-4">
@@ -415,7 +415,7 @@ function GoalsTab({ userId, openModalImmediately }) {
     );
 }
 
-const TABS = ["Vue d'ensemble", "Objectifs", "Dépenses", "Analyse"];
+const TABS = ["Vue d'ensemble", "Objectifs", "Analyse"];
 
 export default function FinancialPage() {
     const location = useLocation();
@@ -483,8 +483,7 @@ export default function FinancialPage() {
             {activeTab === "Objectifs" && (
                 <GoalsTab userId={userId} openModalImmediately={openModal} />
             )}
-            {activeTab === "Dépenses" && <FinancialForm highlightField={highlightField} />}
             {activeTab === "Analyse" && <AnalysisTab userId={userId} />}
         </div>
     );
-}
+}

@@ -10,7 +10,7 @@ const active    = "bg-winePale text-wine font-semibold border-l-2 border-wine";
 const subBase   = "text-xs px-3 py-1.5 rounded-md transition flex items-center gap-2 w-full text-left";
 const subActive   = `${subBase} text-wine font-medium bg-winePale`;
 const subInactive = `${subBase} text-dark/60 hover:text-wine hover:bg-winePale`;
-const TABS = ["Vue d'ensemble", "Objectifs", "Dépenses", "Analyse"];
+const TABS = ["Vue d'ensemble", "Objectifs", "Analyse"];
 
 export default function Sidebar({ open, onClose }) {
   const navigate = useNavigate();
@@ -25,6 +25,7 @@ export default function Sidebar({ open, onClose }) {
   };
 
   const linkClass = ({ isActive }) => `${base} ${isActive ? active : inactive}`;
+  const subLinkClass = ({ isActive }) => (isActive ? subActive : subInactive);
 
   const getCurrentTab = () => {
     const params = new URLSearchParams(location.search);
@@ -79,20 +80,25 @@ export default function Sidebar({ open, onClose }) {
                 <button onClick={() => goToTab("Objectifs")} className={currentTab === "Objectifs" ? subActive : subInactive}>
                   <span>◦</span> Objectifs
                 </button>
-                <button onClick={() => goToTab("Dépenses")} className={currentTab === "Dépenses" ? subActive : subInactive}>
-                  <span>◦</span> Dépenses
-                </button>
                 <button onClick={() => goToTab("Analyse")} className={currentTab === "Analyse" ? subActive : subInactive}>
                   <span>◦</span> Analyse
                 </button>
               </div>
 
-              <NavLink to="/transactions" className={linkClass} onClick={onClose}>
-                <span>💳</span> Transactions
+              <NavLink to="/transactions" onClick={onClose}
+                       className={() => linkClass({ isActive: ["/transactions", "/bills"].includes(location.pathname) })}>
+                <span>💳</span> Opérations
               </NavLink>
-              <NavLink to="/bills" className={linkClass} onClick={onClose}>
-                <span>🧾</span> Factures
-              </NavLink>
+
+              <div className="ml-4 space-y-0.5 border-l-2 border-winePale pl-3">
+                <NavLink to="/transactions" className={subLinkClass} onClick={onClose}>
+                  <span>◦</span> Transactions
+                </NavLink>
+                <NavLink to="/bills" className={subLinkClass} onClick={onClose}>
+                  <span>◦</span> Factures
+                </NavLink>
+              </div>
+
               <NavLink to="/family" className={linkClass} onClick={onClose}>
                 <span>👨‍👩‍👧</span> Famille
               </NavLink>
@@ -142,4 +148,4 @@ export default function Sidebar({ open, onClose }) {
         />
       </>
   );
-}
+}
