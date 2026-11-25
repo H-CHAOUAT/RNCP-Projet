@@ -7,6 +7,7 @@ import CreateGoalModal from "./goals/CreateGoalModal";
 const base      = "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition";
 const inactive  = "text-dark/70 hover:bg-winePale hover:text-wine";
 const active    = "bg-winePale text-wine font-semibold border-l-2 border-wine";
+const quickAction = "flex flex-col items-center gap-1.5 rounded-xl border border-wine/30 px-2 py-3 text-xs font-semibold text-wine transition hover:border-wine hover:bg-winePale focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-wine";
 const subBase   = "text-xs px-3 py-1.5 rounded-md transition flex items-center gap-2 w-full text-left";
 const subActive   = `${subBase} text-wine font-medium bg-winePale`;
 const subInactive = `${subBase} text-dark/60 hover:text-wine hover:bg-winePale`;
@@ -69,6 +70,19 @@ export default function Sidebar({ open, onClose }) {
                 <span>🏠</span> Tableau de bord
               </NavLink>
 
+              <div className="!my-3 grid grid-cols-2 gap-2" role="group" aria-label="Actions rapides">
+                {[
+                  { icon: "🧾", label: "Facture",  onClick: () => setBillOpen(true) },
+                  { icon: "🎯", label: "Objectif", onClick: () => setGoalOpen(true) },
+                ].map((a) => (
+                  <button key={a.label} type="button" onClick={a.onClick}
+                          aria-label={`Ajouter : ${a.label.toLowerCase()}`} className={quickAction}>
+                    <span className="text-lg leading-none" aria-hidden="true">{a.icon}</span>
+                    <span>+ {a.label}</span>
+                  </button>
+                ))}
+              </div>
+
               <NavLink to="/financial" className={linkClass} onClick={onClose}>
                 <span>💰</span> Profil financier
               </NavLink>
@@ -103,24 +117,6 @@ export default function Sidebar({ open, onClose }) {
                 <span>👨‍👩‍👧</span> Famille
               </NavLink>
             </nav>
-
-            
-            <div className="mt-4 rounded-xl border border-winePale bg-winePale/50 p-3">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-wine/70">
-                Actions rapides
-              </div>
-              <div className="space-y-1">
-
-                <button className={`${base} w-full text-left ${inactive}`}
-                        onClick={() => setBillOpen(true)}>
-                  🧾 Ajouter une facture
-                </button>
-                <button className={`${base} w-full text-left ${inactive}`}
-                        onClick={() => setGoalOpen(true)}>
-                  🎯 Ajouter un objectif
-                </button>
-              </div>
-            </div>
 
             
             <div className="mt-4 border-t border-winePale pt-4 space-y-1">
