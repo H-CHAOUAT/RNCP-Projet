@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import FinancialForm from "../components/organisms/financial/FinancialForm";
 import GoalsList from "../components/organisms/goals/GoalsList";
+import useFamilyMembers from "../hooks/useFamilyMembers";
 import CreateGoalModal from "../components/organisms/goals/CreateGoalModal";
 import { apiFetch } from "../api/apiFetch";
 import { categoryLabel } from "../constants/labels";
@@ -363,6 +364,20 @@ function GoalsTab({ userId, openModalImmediately }) {
     const [goals, setGoals] = useState([]);
     const [loading, setLoading] = useState(true);
     const [open, setOpen] = useState(openModalImmediately ?? false);
+    const [familyGoals, setFamilyGoals] = useState([]);
+    const [person, setPerson] = useState(null); // null = everyone
+    const family = useFamilyMembers();
+
+    // Only parents may see other people's goals (the server enforces it too).
+    const isParentWithFamily = family.role === "PARENT" && family.groupId !== null;
+
+    useEffect(() => {
+        if (!isParentWithFamily) return;
+        apiFetch(`/api/goals/family/${family.groupId}`)
+            .then(r => (r.ok ? r.json() : []))
+            .then(setFamilyGoals)
+            .catch(console.error);
+    }, [isParentWithFamily, family.groupId]);
 
     useEffect(() => {
         if (!userId) {
@@ -382,6 +397,17 @@ function GoalsTab({ userId, openModalImmediately }) {
         setOpen(false);
     };
 
+    const showPersonFilter = isParentWithFamily && family.members.length > 1;
+    // Own goals come from `goals`, which stays up to date after a creation.
+    const allGoals = showPersonFilter
+        ? [...goals, ...familyGoals.filter(g => g.userId !== userId)]
+        : goals;
+    const shownGoals = person === null ? allGoals : allGoals.filter(g => g.userId === person);
+    const people = [
+        { id: null, label: "Toute la famille" },
+        ...family.members.map(m => ({ id: m.userId, label: m.userId === userId ? "Moi" : m.firstName })),
+    ];
+
     return (
         <div className="space-y-4 text-left">
             <div className="flex items-center justify-between">
@@ -400,8 +426,33 @@ function GoalsTab({ userId, openModalImmediately }) {
                 </button>
             </div>
 
-            <div className="rounded-xl border bg-white p-6 text-left">
-                <GoalsList goals={goals} loading={loading} />
+            <div className="space-y-4 rounded-xl border bg-white p-6 text-left">
+                {showPersonFilter && (
+                    <div className="flex flex-wrap items-center gap-2 border-b pb-4" role="group" aria-label="Filtrer par personne">
+                        <span className="text-xs font-semibold text-dark/50">Personne :</span>
+                        {people.map(p => (
+                            <button
+                                key={p.id ?? "all"}
+                                type="button"
+                                onClick={() => setPerson(p.id)}
+                                aria-pressed={person === p.id}
+                                className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                                    person === p.id
+                                        ? "bg-wine text-white"
+                                        : "border bg-white text-slate-600 hover:bg-slate-50"
+                                }`}
+                            >
+                                {p.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                <GoalsList
+                    goals={shownGoals}
+                    loading={loading}
+                    emptyMessage={person !== null && person !== userId ? "Aucun objectif pour cette personne." : undefined}
+                />
             </div>
 
             <CreateGoalModal

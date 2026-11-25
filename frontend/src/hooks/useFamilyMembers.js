@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "../api/apiFetch";
 
-const EMPTY = { loaded: false, hasGroup: false, role: null, members: [] };
+const EMPTY = { loaded: false, hasGroup: false, groupId: null, role: null, members: [] };
 
 /** Household of the signed-in user, current user first. Reloads on "family-changed". */
 export default function useFamilyMembers() {
@@ -25,7 +25,7 @@ export default function useFamilyMembers() {
                 members = await res.json();
                 members.sort((a, b) => (b.userId === user.userId) - (a.userId === user.userId));
             }
-            setFamily({ loaded: true, hasGroup: Boolean(groupId), role: user.role, members });
+            setFamily({ loaded: true, hasGroup: Boolean(groupId), groupId, role: user.role, members });
         } catch {
             // The menu simply stays without sub-items if the API is unreachable.
         }

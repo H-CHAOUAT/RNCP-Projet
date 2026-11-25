@@ -8,13 +8,18 @@ const HORIZONS = [
     ["LONG", "Long terme"],
 ];
 
-export default function GoalsList({ goals, loading, currency = "EUR" }) {
+export default function GoalsList({
+    goals,
+    loading,
+    currency = "EUR",
+    emptyMessage = "Aucun objectif pour l'instant. Créez le premier.",
+}) {
     const [horizonFilter, setHorizonFilter] = useState("");
 
     if (loading) return <p className="text-dark/50">Chargement des objectifs...</p>;
 
     if (!goals?.length) {
-        return <p className="text-dark/50">Aucun objectif pour l'instant. Créez le premier.</p>;
+        return <p className="text-dark/50">{emptyMessage}</p>;
     }
 
     const filtered = horizonFilter

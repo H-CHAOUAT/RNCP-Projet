@@ -171,7 +171,9 @@ export default function FamilyTab({ view, memberId }) {
     const isParent = (userData?.role ?? userRole) === "PARENT";
     const member = view === "member" ? members.find(m => String(m.userId ?? m.id) === memberId) : null;
     const isSelf = String(memberId) === String(userId);
-    const memberGoals = familyGoals.filter(g => String(g.createdByUserId) === memberId);
+    const memberGoals = familyGoals.filter(g => String(g.userId) === memberId);
+    // A parent sees everyone's goals; anyone else only their own (the server enforces it too).
+    const canSeeGoals = isParent || isSelf;
 
     if (view === "index") {
         return <Navigate to={familyGroupId ? `/family/members/${userId}` : "/family/add"} replace />;
@@ -307,9 +309,12 @@ export default function FamilyTab({ view, memberId }) {
                 </div>
             )}
 
-            {member && isParent && memberGoals.length > 0 && (
+            {member && canSeeGoals && (
                 <div className="rounded-xl border bg-white p-6 space-y-4">
-                    <h3 className="font-semibold text-slate-900">Objectifs du foyer créés par {member.firstName}</h3>
+                    <h3 className="font-semibold text-slate-900">{isSelf ? "Mes objectifs" : `Objectifs de ${member.firstName}`}</h3>
+                    {memberGoals.length === 0 && (
+                        <p className="text-sm text-slate-500">Aucun objectif pour l'instant.</p>
+                    )}
                     <div className="space-y-3">
                         {memberGoals.map(g => {
                             const pct = g.targetAmount > 0

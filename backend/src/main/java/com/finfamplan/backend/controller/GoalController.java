@@ -61,8 +61,11 @@ public class GoalController {
         if (caller.getFamilyGroup() == null || !caller.getFamilyGroup().getId().equals(familyGroupId)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Ce foyer ne vous appartient pas");
         }
+        // Parents see every goal in the household; everyone else only their own.
+        boolean seesWholeHousehold = caller.getRole() == Role.PARENT;
         return goalRepo.findByUser_FamilyGroup_Id(familyGroupId)
                 .stream()
+                .filter(g -> seesWholeHousehold || g.getUser().getUserId().equals(caller.getUserId()))
                 .map(this::toViewDto)
                 .toList();
     }
@@ -252,6 +255,7 @@ public class GoalController {
     private GoalViewDto toViewDto(Goal g) {
         GoalViewDto dto = new GoalViewDto();
         dto.id = g.getId();
+        dto.userId = g.getUser().getUserId();
         dto.title = g.getTitle();
         dto.description = g.getDescription();
         dto.targetAmount = g.getTargetAmount();
@@ -266,6 +270,7 @@ public class GoalController {
         dto.horizon = computeHorizon(g.getDeadline());
 
         if (g.getCreatedBy() != null) {
+            dto.createdByUserId = g.getCreatedBy().getUserId();
             String fn = g.getCreatedBy().getFirstName() != null ? g.getCreatedBy().getFirstName() : "";
             String ln = g.getCreatedBy().getLastName() != null ? g.getCreatedBy().getLastName() : "";
             dto.createdByName = (fn + " " + ln).trim();
