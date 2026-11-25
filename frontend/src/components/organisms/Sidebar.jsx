@@ -1,4 +1,6 @@
 import { useState } from "react";
+import useFamilyMembers from "../../hooks/useFamilyMembers";
+import { roleLabel } from "../../constants/labels";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import Logo from "../atoms/Logo";
 import CreateBillModal from "./bills/CreateBillModal";
@@ -18,6 +20,7 @@ export default function Sidebar({ open, onClose }) {
   const location = useLocation();
   const [billOpen, setBillOpen] = useState(false);
   const [goalOpen, setGoalOpen] = useState(false);
+  const family = useFamilyMembers();
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -116,6 +119,21 @@ export default function Sidebar({ open, onClose }) {
               <NavLink to="/family" className={linkClass} onClick={onClose}>
                 <span>👨‍👩‍👧</span> Famille
               </NavLink>
+
+              {family.loaded && (
+                <div className="ml-4 space-y-0.5 border-l-2 border-winePale pl-3">
+                  {family.members.map((m) => (
+                    <NavLink key={m.userId} to={`/family/members/${m.userId}`} className={subLinkClass} onClick={onClose}>
+                      <span>◦</span> {m.firstName} ({roleLabel(m.role)})
+                    </NavLink>
+                  ))}
+                  {(!family.hasGroup || family.role === "PARENT") && (
+                    <NavLink to="/family/add" className={subLinkClass} onClick={onClose}>
+                      <span>+</span> {family.hasGroup ? "Ajouter un membre" : "Créer ou rejoindre un foyer"}
+                    </NavLink>
+                  )}
+                </div>
+              )}
             </nav>
 
             

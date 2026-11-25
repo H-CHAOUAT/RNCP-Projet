@@ -44,6 +44,8 @@ export default function App() {
                     <Route path="/transactions" element={<TransactionsPage />} />
                     <Route path="/bills" element={<BillsPage />} />
                     <Route path="/family" element={<FamilyPage />} />
+                    <Route path="/family/members/:memberId" element={<FamilyPage view="member" />} />
+                    <Route path="/family/add" element={<FamilyPage view="add" />} />
 
                     <Route path="/settings" element={<ProfilePage />}>
                         <Route index element={<Navigate to="personal" replace />} />
