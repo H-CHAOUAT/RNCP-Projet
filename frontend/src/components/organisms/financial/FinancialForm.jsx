@@ -240,7 +240,7 @@ export default function FinancialForm({ highlightField = null }) {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 gap-5 md:grid-cols-4">
+                <div className="grid grid-cols-1 items-end gap-5 md:grid-cols-4">
                     <FormField label="Salaire mensuel">
                         <Input
                             type="number"
@@ -268,7 +268,7 @@ export default function FinancialForm({ highlightField = null }) {
                         />
                     </FormField>
 
-                    <FormField label="Jour de paie (1 à 28)">
+                    <FormField label="Jour de réception du salaire (1 à 28)">
                         <Input
                             type="number"
                             value={paydayDay}
@@ -278,24 +278,35 @@ export default function FinancialForm({ highlightField = null }) {
                             placeholder="1"
                         />
                     </FormField>
+                </div>
 
-                    <div
-                        ref={alertThresholdRef}
-                        className={`rounded-lg transition-shadow ${highlightAlertThreshold ? "ring-4 ring-wine/50" : ""}`}
-                    >
-                        <FormField label="Seuil d'alerte">
+                <section
+                    ref={alertThresholdRef}
+                    aria-labelledby="alert-threshold-title"
+                    className={`rounded-xl border-2 border-amber-300 bg-amber-50 p-5 transition-shadow ${highlightAlertThreshold ? "ring-4 ring-wine/50" : ""}`}
+                >
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                        <div className="md:max-w-xl">
+                            <h2 id="alert-threshold-title" className="text-lg font-semibold text-amber-900">
+                                🔔 Seuil d'alerte
+                            </h2>
+                            <p className="mt-1 text-sm text-slate-700">
+                                Le <strong>minimum à garder sur votre compte</strong>. Vous êtes alerté si vos factures
+                                à venir avant votre prochain salaire font passer votre solde en dessous.
+                            </p>
+                        </div>
+                        <label className="block md:w-52">
+                            <span className="mb-1 block text-sm font-semibold text-amber-900">Montant du seuil ({currency})</span>
                             <Input
                                 type="number"
                                 value={alertThreshold}
                                 onChange={(e) => setAlertThreshold(e.target.value)}
                                 placeholder="0"
+                                className="text-lg font-semibold"
                             />
-                        </FormField>
+                        </label>
                     </div>
-                </div>
-                <p className="text-xs text-slate-400 -mt-2">
-                    Vous serez alerté si votre solde prévisionnel passe sous ce montant (0 par défaut).
-                </p>
+                </section>
 
                 {lastSalaryApplied && (
                     <p className="text-sm text-slate-600">
