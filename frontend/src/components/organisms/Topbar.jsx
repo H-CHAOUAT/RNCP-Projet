@@ -22,7 +22,6 @@ export default function Topbar({ onMenuClick }) {
         if (pathname.includes("/personal"))       return { title: "Paramètres",         subtitle: "Informations personnelles" };
         if (pathname.includes("/preferences"))    return { title: "Paramètres",         subtitle: "Préférences" };
         if (pathname.includes("/security"))       return { title: "Paramètres",         subtitle: "Sécurité" };
-        if (pathname.includes("/family"))         return { title: "Paramètres",         subtitle: "Famille" };
         if (pathname.startsWith("/settings"))     return { title: "Paramètres",         subtitle: "Gérez les paramètres de votre compte" };
         return { title: "FinFamPlan", subtitle: "" };
     }, [pathname, userName]);

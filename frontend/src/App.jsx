@@ -7,7 +7,6 @@ import AppLayout from "./layouts/AppLayout";
 import PersonalTab from "./components/organisms/profile/PersonalTab";
 import PreferencesTab from "./components/organisms/profile/PreferencesTab";
 import SecurityTab from "./components/organisms/profile/SecurityTab";
-import FamilyTab from "./components/organisms/profile/FamilyTab";
 import FinancialPage from "./pages/FinancialPage.jsx";
 import GoalsPage from "./pages/GoalsPage.jsx";
 import TransactionsPage from "./pages/TransactionsPage.jsx";
@@ -51,7 +50,7 @@ export default function App() {
                         <Route path="personal" element={<PersonalTab />} />
                         <Route path="preferences" element={<PreferencesTab />} />
                         <Route path="security" element={<SecurityTab />} />
-                        <Route path="family" element={<FamilyTab />} />
+                        <Route path="family" element={<Navigate to="/family" replace />} />
                     </Route>
 
                     <Route path="/profile/*" element={<Navigate to="/settings" replace />} />

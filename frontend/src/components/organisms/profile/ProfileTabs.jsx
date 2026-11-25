@@ -4,7 +4,6 @@ const tabs = [
     { to: "/settings/personal", label: "Infos personnelles" },
     { to: "/settings/preferences", label: "Préférences" },
     { to: "/settings/security", label: "Sécurité" },
-    { to: "/settings/family", label: "Famille" },
 ];
 
 export default function ProfileTabs() {
