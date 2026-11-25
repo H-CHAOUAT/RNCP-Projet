@@ -1,5 +1,6 @@
 import { useState } from "react";
 import GoalCard from "../../molecules/GoalCard";
+import DeleteGoalDialog from "../../molecules/DeleteGoalDialog";
 
 const HORIZONS = [
     ["", "Tous"],
@@ -13,8 +14,11 @@ export default function GoalsList({
     loading,
     currency = "EUR",
     emptyMessage = "Aucun objectif pour l'instant. Créez le premier.",
+    canDelete = () => false,
+    onDelete,
 }) {
     const [horizonFilter, setHorizonFilter] = useState("");
+    const [goalToDelete, setGoalToDelete] = useState(null);
 
     if (loading) return <p className="text-dark/50">Chargement des objectifs...</p>;
 
@@ -48,7 +52,15 @@ export default function GoalsList({
             {filtered.length === 0 ? (
                 <p className="text-dark/50">Aucun objectif pour cet horizon.</p>
             ) : (
-                filtered.map((g) => <GoalCard key={g.id} goal={g} currency={currency} />)
+                filtered.map((g) => (
+                    <GoalCard key={g.id} goal={g} currency={currency}
+                              onDelete={canDelete(g) ? setGoalToDelete : undefined} />
+                ))
+            )}
+
+            {goalToDelete && (
+                <DeleteGoalDialog goal={goalToDelete} currency={currency}
+                                  onConfirm={onDelete} onClose={() => setGoalToDelete(null)} />
             )}
         </div>
     );

@@ -1,3 +1,4 @@
+import { Trash2 } from "lucide-react";
 import ProgressBar from "./ProgressBar";
 
 const money = (n, currency = "EUR") => {
@@ -15,7 +16,7 @@ const HORIZON_COLORS = {
     LONG: "bg-sky-100 text-sky-700",
 };
 
-export default function GoalCard({ goal, currency = "EUR" }) {
+export default function GoalCard({ goal, currency = "EUR", onDelete }) {
     const pct =
         goal.targetAmount > 0 ? Math.min(100, (goal.currentAmount / goal.targetAmount) * 100) : 0;
     const remaining = goal.remainingAmount ?? Math.max(0, goal.targetAmount - goal.currentAmount);
@@ -58,11 +59,20 @@ export default function GoalCard({ goal, currency = "EUR" }) {
                     ) : null}
                 </div>
 
-                <div className="text-sm text-slate-700 text-right">
-                    <div>
-                        {goal.currentAmount} / {goal.targetAmount}
+                <div className="flex items-start gap-2">
+                    <div className="text-sm text-slate-700 text-right">
+                        <div>
+                            {goal.currentAmount} / {goal.targetAmount}
+                        </div>
+                        <div className="text-xs text-slate-500">{pct.toFixed(0)}%</div>
                     </div>
-                    <div className="text-xs text-slate-500">{pct.toFixed(0)}%</div>
+                    {onDelete && (
+                        <button type="button" onClick={() => onDelete(goal)}
+                                aria-label={`Supprimer l'objectif ${goal.title}`} title="Supprimer"
+                                className="-mt-1.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-red-600 transition hover:bg-red-50 hover:text-red-700">
+                            <Trash2 className="h-5 w-5" aria-hidden="true" />
+                        </button>
+                    )}
                 </div>
             </div>
 

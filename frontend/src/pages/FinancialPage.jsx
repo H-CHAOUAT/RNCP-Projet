@@ -397,6 +397,16 @@ function GoalsTab({ userId, openModalImmediately }) {
         setOpen(false);
     };
 
+    const handleDelete = async (goal) => {
+        try {
+            const res = await apiFetch(`/api/goals/${goal.id}/user/${userId}`, { method: "DELETE" });
+            if (res.ok) setGoals(prev => prev.filter(g => g.id !== goal.id));
+            return res.ok;
+        } catch {
+            return false;
+        }
+    };
+
     const showPersonFilter = isParentWithFamily && family.members.length > 1;
     // Own goals come from `goals`, which stays up to date after a creation.
     const allGoals = showPersonFilter
@@ -451,6 +461,8 @@ function GoalsTab({ userId, openModalImmediately }) {
                 <GoalsList
                     goals={shownGoals}
                     loading={loading}
+                    canDelete={g => g.userId === userId}
+                    onDelete={handleDelete}
                     emptyMessage={person !== null && person !== userId ? "Aucun objectif pour cette personne." : undefined}
                 />
             </div>
