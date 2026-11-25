@@ -3,10 +3,13 @@ import FormField from "../../molecules/FormField";
 import Input from "../../atoms/Input";
 import Select from "../../atoms/Select";
 import Button from "../../atoms/Button";
+import CategoryCombobox from "../../molecules/CategoryCombobox";
+import { Trash2 } from "lucide-react";
 import { apiFetch } from "../../../api/apiFetch";
 import { categoryLabel } from "../../../constants/labels";
 
 const PRESET_CATEGORIES = ["RENT", "BILLS", "SUBSCRIPTIONS", "GROCERIES", "TRANSPORT", "SAVINGS"];
+const CATEGORY_MAX_LENGTH = 50; // size of the expense category column
 
 const fmtDate = (d) => {
     if (!d) return "";
@@ -30,15 +33,10 @@ const dedupeExpenses = (raw) => {
 };
 
 const toFormRows = (rawExpenses) =>
-    rawExpenses.map((e) => {
-        const isPreset = PRESET_CATEGORIES.includes(e.category ?? "");
-        return {
-            category: isPreset ? e.category : "OTHER",
-            amount: String(e.amount ?? "0"),
-            custom: !isPreset,
-            customLabel: !isPreset ? (e.category ?? "") : "",
-        };
-    });
+    rawExpenses.map((e) => ({
+        category: e.category ?? "",
+        amount: String(e.amount ?? "0"),
+    }));
 
 export default function FinancialForm({ highlightField = null }) {
     const [loading, setLoading] = useState(true);
@@ -55,7 +53,7 @@ export default function FinancialForm({ highlightField = null }) {
     const [, setBalanceLocked] = useState(false);
 
     const [expenses, setExpenses] = useState([
-        { category: "RENT", amount: "0", custom: false, customLabel: "" },
+        { category: "RENT", amount: "0" },
     ]);
 
     const prevIncomeRef = useRef("0");
@@ -95,7 +93,7 @@ export default function FinancialForm({ highlightField = null }) {
         setExpenses(
             deduped.length
                 ? toFormRows(deduped)
-                : [{ category: "RENT", amount: "0", custom: false, customLabel: "" }]
+                : [{ category: "RENT", amount: "0" }]
         );
     }, []);
 
@@ -128,29 +126,8 @@ export default function FinancialForm({ highlightField = null }) {
             prev.map((row, i) => (i === index ? { ...row, [key]: value } : row))
         );
 
-    const usedPresets = expenses.filter((e) => !e.custom).map((e) => e.category);
-    const allPresetsUsed = PRESET_CATEGORIES.every((c) => usedPresets.includes(c));
-
-    const addPresetExpense = () => {
-        const unused = PRESET_CATEGORIES.find((c) => !usedPresets.includes(c));
-        if (unused) {
-            setExpenses((prev) => [
-                ...prev,
-                { category: unused, amount: "0", custom: false, customLabel: "" },
-            ]);
-        } else {
-            setExpenses((prev) => [
-                ...prev,
-                { category: "OTHER", amount: "0", custom: true, customLabel: "" },
-            ]);
-        }
-    };
-
-    const addCustomExpense = () =>
-        setExpenses((prev) => [
-            ...prev,
-            { category: "OTHER", amount: "0", custom: true, customLabel: "" },
-        ]);
+    const addExpense = () =>
+        setExpenses((prev) => [...prev, { category: "", amount: "0" }]);
 
     const removeExpense = (index) =>
         setExpenses((prev) => prev.filter((_, i) => i !== index));
@@ -162,7 +139,7 @@ export default function FinancialForm({ highlightField = null }) {
         alertThreshold: Number(alertThreshold || 0),
         currency,
         expenses: expenses.map((e) => ({
-            category: e.custom ? (e.customLabel?.trim() || "OTHER") : e.category,
+            category: e.category.trim() || "OTHER",
             amount: Number(e.amount || 0),
         })),
     });
@@ -216,7 +193,16 @@ export default function FinancialForm({ highlightField = null }) {
             setMessage({ type: "error", text: "Aucune session utilisateur." });
             return;
         }
-        await doSave(buildPayload());
+        const payload = buildPayload();
+        // A preset listed twice would be silently dropped on the next load (see dedupeExpenses).
+        const duplicate = PRESET_CATEGORIES.find(
+            (c) => payload.expenses.filter((e) => e.category === c).length > 1
+        );
+        if (duplicate) {
+            setMessage({ type: "error", text: `❌ La catégorie « ${categoryLabel(duplicate)} » apparaît deux fois.` });
+            return;
+        }
+        await doSave(payload);
     };
 
     if (loading) {
@@ -325,48 +311,24 @@ export default function FinancialForm({ highlightField = null }) {
                     </div>
 
                     <p className="mb-4 text-sm text-slate-500">
-                        Chaque catégorie prédéfinie ne peut apparaître qu'une fois.
-                        {allPresetsUsed && " Toutes les catégories sont utilisées — ajoutez-en une personnalisée ci-dessous."}
+                        Choisissez une catégorie dans la liste ou saisissez la vôtre. Chaque catégorie de la
+                        liste ne peut apparaître qu'une fois.
                     </p>
 
                     <div className="space-y-3">
                         {expenses.map((row, idx) => (
                             <div
                                 key={idx}
-                                className="grid grid-cols-1 items-end gap-3 md:grid-cols-3"
+                                className="grid grid-cols-[1fr_1fr_auto] items-end gap-3"
                             >
                                 <FormField label="Catégorie">
-                                    {row.custom ? (
-                                        <Input
-                                            value={row.customLabel || ""}
-                                            onChange={(e) =>
-                                                updateExpense(idx, "customLabel", e.target.value)
-                                            }
-                                            placeholder="ex. Cours de piano"
-                                        />
-                                    ) : (
-                                        <Select
-                                            value={row.category}
-                                            onChange={(e) =>
-                                                updateExpense(idx, "category", e.target.value)
-                                            }
-                                        >
-                                            {PRESET_CATEGORIES.map((c) => {
-                                                const taken =
-                                                    usedPresets.includes(c) && c !== row.category;
-                                                return (
-                                                    <option
-                                                        key={c}
-                                                        value={c}
-                                                        disabled={taken}
-                                                    >
-                                                        {categoryLabel(c)}
-                                                        {taken ? " (déjà ajoutée)" : ""}
-                                                    </option>
-                                                );
-                                            })}
-                                        </Select>
-                                    )}
+                                    <CategoryCombobox
+                                        value={row.category}
+                                        onChange={(value) => updateExpense(idx, "category", value)}
+                                        presets={PRESET_CATEGORIES}
+                                        takenPresets={expenses.filter((_, i) => i !== idx).map((e) => e.category)}
+                                        maxLength={CATEGORY_MAX_LENGTH}
+                                    />
                                 </FormField>
 
                                 <FormField label="Montant">
@@ -381,40 +343,26 @@ export default function FinancialForm({ highlightField = null }) {
                                     />
                                 </FormField>
 
-                                <div className="flex items-end gap-2">
-                                    {row.custom && (
-                                        <span className="self-center whitespace-nowrap rounded-full bg-purple-100 px-2 py-0.5 text-xs text-purple-700">
-                                            Personnalisée
-                                        </span>
-                                    )}
-                                    <Button
-                                        type="button"
-                                        onClick={() => removeExpense(idx)}
-                                        className="flex-1 bg-red-50 text-red-700 hover:bg-red-100"
-                                    >
-                                        Supprimer
-                                    </Button>
-                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => removeExpense(idx)}
+                                    aria-label={`Supprimer la charge ${idx + 1}`}
+                                    title="Supprimer"
+                                    className="mb-4 flex h-[42px] w-[42px] items-center justify-center rounded-lg text-red-600 transition hover:bg-red-50 hover:text-red-700"
+                                >
+                                    <Trash2 className="h-5 w-5" aria-hidden="true" />
+                                </button>
                             </div>
                         ))}
                     </div>
 
-                    <div className="mt-4 flex flex-wrap gap-3">
-                        {!allPresetsUsed && (
-                            <Button
-                                type="button"
-                                onClick={addPresetExpense}
-                                className="bg-slate-100 text-slate-800 hover:bg-slate-200"
-                            >
-                                + Ajouter une catégorie
-                            </Button>
-                        )}
+                    <div className="mt-4">
                         <Button
                             type="button"
-                            onClick={addCustomExpense}
-                            className="bg-purple-50 text-purple-800 hover:bg-purple-100"
+                            onClick={addExpense}
+                            className="border border-wine/30 !bg-transparent !text-wine hover:border-wine hover:!bg-winePale"
                         >
-                            + Ajouter une dépense personnalisée
+                            + Ajouter une charge
                         </Button>
                     </div>
                 </div>
