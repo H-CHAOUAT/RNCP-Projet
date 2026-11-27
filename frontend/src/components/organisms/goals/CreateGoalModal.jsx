@@ -1,6 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import Button from "../../atoms/Button";
 import DateInput from "../../atoms/DateInput";
+import { todayISO } from "../../../utils/date";
 import { apiFetch } from "../../../api/apiFetch";
 
 const SUGGESTIONS = [
@@ -16,6 +17,31 @@ const money = (n, currency = "EUR") => {
     } catch {
         return `${Number(n ?? 0).toFixed(2)} ${currency}`;
     }
+};
+
+// Spells out what each plan means for the deadline, using the real amounts.
+const planExplanation = (plan, remaining, months, currency) => {
+    // Work in cents so that rounding errors don't add a month.
+    const left = Math.round(Number(remaining) * 100);
+    const monthly = Math.round(Number(plan.amountPerPayday) * 100);
+    if (monthly <= 0 || months <= 0) return plan.note;
+
+    const needed = Math.ceil(left / monthly);
+    const gap = (monthly * months - left) / 100;
+
+    if (plan.label === "Rapide") {
+        const effect = needed < months
+            ? `Objectif atteint en ${needed} mois, soit ${months - needed} mois avant l'échéance.`
+            : `D'ici l'échéance, vous épargnez ${money(gap, currency)} de plus que nécessaire.`;
+        return `20 % de plus par mois que « Dans les temps ». ${effect}`;
+    }
+    if (plan.label === "Souple" && gap < 0) {
+        return `20 % de moins par mois que « Dans les temps ». ⚠️ Il manquera ${money(-gap, currency)} à l'échéance ; à ce rythme, il faudra ${needed} mois.`;
+    }
+    if (plan.label === "Dans les temps") {
+        return `Objectif atteint en ${Math.min(needed, months)} mois, à l'échéance.`;
+    }
+    return plan.note;
 };
 
 export default function CreateGoalModal({ open, onClose, onCreated, onCreate, existingTitles = [], userId: userIdProp }) {
@@ -53,7 +79,7 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
 
     if (!open) return null;
 
-    const fetchSuggestions = async (goalId) => {
+    const fetchSuggestions = async (goalId, savedPlanLabel) => {
         setSuggestionsLoading(true);
         setSuggestionsError("");
         try {
@@ -62,7 +88,10 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                 setSuggestionsError(await res.text());
                 return;
             }
-            setSuggestions(await res.json());
+            const data = await res.json();
+            setSuggestions(data);
+            // Show the plan the goal already has ("Dans les temps" by default).
+            setChosenPlan(data.suggestions.find((s) => s.label === savedPlanLabel) ?? null);
         } catch {
             setSuggestionsError("Erreur réseau lors du chargement des suggestions.");
         } finally {
@@ -94,7 +123,7 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
             const created = await res.json();
             setCreatedGoal(created);
             setStep("plan");
-            fetchSuggestions(created.id);
+            fetchSuggestions(created.id, created.planLabel);
         } catch { setError("❌ Erreur réseau. Veuillez réessayer."); }
         finally   { setSaving(false); }
     };
@@ -198,6 +227,7 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                                     <DateInput
                                         value={deadline}
                                         onChange={(iso) => setDeadline(iso)}
+                                        min={todayISO()}
                                         className={inputCls}
                                     />
                                 </div>
@@ -222,7 +252,7 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                             <div>
                                 <h2 className="text-xl font-semibold text-slate-900">Choisissez un plan d'épargne</h2>
                                 <p className="text-sm text-slate-500 mt-0.5">
-                                    Basé sur votre jour de réception du salaire et ce qu'il reste à épargner pour « {createdGoal?.title} ».
+                                    Combien mettre de côté chaque mois pour « {createdGoal?.title} » ?
                                 </p>
                             </div>
                             <button onClick={handleClose} className="rounded-md p-2 hover:bg-slate-100 text-slate-400">✕</button>
@@ -241,18 +271,20 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                         {!suggestionsLoading && suggestions && (
                             <div className="space-y-3">
                                 <div className="text-xs text-slate-500">
-                                    {money(suggestions.remainingAmount, suggestions.currency)} restant à épargner,
-                                    {" "}{suggestions.paydaysToDeadline} mois restant{suggestions.paydaysToDeadline !== 1 ? "s" : ""}.
+                                    {money(suggestions.remainingAmount, suggestions.currency)} à épargner,
+                                    {" "}{suggestions.paydaysToDeadline} mois restant{suggestions.paydaysToDeadline !== 1 ? "s" : ""}
+                                    {" "}avant le {deadline.split("-").reverse().join("/")}.
                                 </div>
-                                <div className="grid grid-cols-3 gap-2">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     {suggestions.suggestions.map((s) => {
                                         const isSelected = chosenPlan?.label === s.label;
                                         return (
                                             <button
                                                 key={s.label}
                                                 type="button"
-                                                onClick={() => setChosenPlan(isSelected ? null : s)}
-                                                className={`rounded-lg p-3 text-left border transition hover:scale-[1.02] ${
+                                                onClick={() => setChosenPlan(s)}
+                                                aria-pressed={isSelected}
+                                                className={`flex flex-col justify-start rounded-lg p-3 text-left border transition hover:scale-[1.02] ${
                                                     isSelected
                                                         ? "bg-wine text-white border-wine"
                                                         : "bg-white text-slate-800 border-blue-200 hover:border-wine"
@@ -260,7 +292,9 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                                             >
                                                 <div className={`text-xs mb-1 ${isSelected ? "text-red-100" : "text-slate-500"}`}>{s.label}</div>
                                                 <div className="text-base font-bold">{money(s.amountPerPayday, suggestions.currency)}/mois</div>
-                                                <div className={`text-xs mt-1 ${isSelected ? "text-red-200" : "text-slate-400"}`}>{s.note}</div>
+                                                <div className={`text-xs mt-1 ${isSelected ? "text-red-100" : "text-slate-500"}`}>
+                                                    {planExplanation(s, suggestions.remainingAmount, suggestions.paydaysToDeadline, suggestions.currency)}
+                                                </div>
                                             </button>
                                         );
                                     })}
@@ -270,7 +304,7 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
 
                         {!suggestionsLoading && !suggestions && (
                             <p className="text-sm text-slate-500 py-2">
-                                Votre objectif a été créé, mais nous n'avons pas pu charger de plan d'épargne pour l'instant. Vous pouvez passer cette étape.
+                                Votre objectif a été créé, mais nous n'avons pas pu charger de plan d'épargne pour l'instant. Vous pouvez fermer cette fenêtre.
                             </p>
                         )}
 
@@ -278,10 +312,6 @@ export default function CreateGoalModal({ open, onClose, onCreated, onCreate, ex
                             <Button type="button" onClick={handleSavePlan} disabled={!chosenPlan || planSaving} className="flex-1">
                                 {planSaving ? "Enregistrement..." : "Enregistrer le plan"}
                             </Button>
-                            <button type="button" onClick={handleSkip} disabled={planSaving}
-                                    className="flex-1 rounded-lg border border-slate-300 bg-white text-slate-700 font-semibold py-2 px-4 hover:bg-slate-50 disabled:opacity-50 transition">
-                                Passer pour l'instant
-                            </button>
                         </div>
                     </>
                 )}

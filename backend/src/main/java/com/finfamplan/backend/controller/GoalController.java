@@ -22,6 +22,8 @@ import java.util.List;
 @RequestMapping("/api/goals")
 public class GoalController {
 
+    private static final String ON_TIME_PLAN = "Dans les temps";
+
     private final GoalRepository goalRepo;
     private final GoalContributionRepository contribRepo;
     private final UserRepository userRepo;
@@ -88,6 +90,15 @@ public class GoalController {
         g.setCurrentAmount(BigDecimal.ZERO);
 
         g.setCreatedBy(user);
+
+        // "Dans les temps" is the default plan; the user can pick another one afterwards.
+        // No plan is set when it can't be computed (e.g. no financial profile).
+        GoalViewDto effort = new GoalViewDto();
+        computeEffort(g, effort);
+        if (effort.monthlyEffort != null) {
+            g.setPlanLabel(ON_TIME_PLAN);
+            g.setPlanAmountPerPayday(effort.monthlyEffort);
+        }
 
         Goal saved = goalRepo.save(g);
         return toViewDto(saved);
@@ -222,19 +233,19 @@ public class GoalController {
                 .divide(BigDecimal.valueOf(paydaysToDeadline), 2, RoundingMode.CEILING);
 
         GoalSuggestionDto onTime = new GoalSuggestionDto();
-        onTime.label = "Dans les temps";
+        onTime.label = ON_TIME_PLAN;
         onTime.amountPerPayday = base;
         onTime.paydaysToDeadline = paydaysToDeadline;
         onTime.note = "Montant recommandé chaque mois pour atteindre la date limite.";
 
         GoalSuggestionDto aggressive = new GoalSuggestionDto();
-        aggressive.label = "Rapide (+20%)";
+        aggressive.label = "Rapide";
         aggressive.amountPerPayday = base.multiply(BigDecimal.valueOf(1.2)).setScale(2, RoundingMode.CEILING);
         aggressive.paydaysToDeadline = paydaysToDeadline;
         aggressive.note = "Constituez une marge (utile si vous sautez un mois).";
 
         GoalSuggestionDto relaxed = new GoalSuggestionDto();
-        relaxed.label = "Souple (-20%)";
+        relaxed.label = "Souple";
         relaxed.amountPerPayday = base.multiply(BigDecimal.valueOf(0.8)).setScale(2, RoundingMode.CEILING);
         relaxed.paydaysToDeadline = paydaysToDeadline;
         relaxed.note = "Contribution plus faible pour l'instant, à augmenter peut-être plus tard.";
@@ -246,7 +257,7 @@ public class GoalController {
         resp.paydayDay = paydayDay;
         resp.nextPayday = nextPayday;
         resp.paydaysToDeadline = paydaysToDeadline;
-        resp.suggestions = List.of(onTime, aggressive, relaxed);
+        resp.suggestions = List.of(aggressive, onTime, relaxed);
 
         return resp;
     }
