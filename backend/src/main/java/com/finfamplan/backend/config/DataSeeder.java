@@ -2,6 +2,7 @@ package com.finfamplan.backend.config;
 
 import com.finfamplan.backend.model.*;
 import com.finfamplan.backend.repository.*;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,15 +22,18 @@ public class DataSeeder implements CommandLineRunner {
     private final FamilyGroupRepository familyGroupRepo;
     private final FinancialProfileRepository financialProfileRepo;
     private final PasswordEncoder passwordEncoder;
+    private final String seedPassword;
 
     public DataSeeder(UserRepository userRepo,
                       FamilyGroupRepository familyGroupRepo,
                       FinancialProfileRepository financialProfileRepo,
-                      PasswordEncoder passwordEncoder) {
+                      PasswordEncoder passwordEncoder,
+                      @Value("${SEED_PASSWORD:Password1234}") String seedPassword) {
         this.userRepo = userRepo;
         this.familyGroupRepo = familyGroupRepo;
         this.financialProfileRepo = financialProfileRepo;
         this.passwordEncoder = passwordEncoder;
+        this.seedPassword = seedPassword;
     }
 
     @Override
@@ -37,6 +41,8 @@ public class DataSeeder implements CommandLineRunner {
     public void run(String... args) {
         seedPersonas();
 
+        // Génération en masse désactivée : seuls les 3 comptes de test sont créés.
+        /*
         if (userRepo.count() >= 10) return;
 
         String hashed = passwordEncoder.encode("Password1234");
@@ -172,15 +178,16 @@ public class DataSeeder implements CommandLineRunner {
                 createFinancialProfile(child, childSal, currency, childBal, new String[0]);
             }
         }
+        */
     }
 
     /**
-     * One test account per persona (Marc = ADULT, Elyne = PARENT, Lucas = CHILD).
+     * One test account per persona (Marc = ADULT, Victoria = PARENT, Lucas = CHILD).
      * Idempotent: each account is created only if its email does not exist yet.
-     * Password for all of them: Password1234.
+     * Password: SEED_PASSWORD (defaults to Password1234 for local development).
      */
     private void seedPersonas() {
-        String hashed = passwordEncoder.encode("Password1234");
+        String hashed = passwordEncoder.encode(seedPassword);
 
         if (!userRepo.existsByEmail("marc@test.com")) {
             User marc = buildPersona("Marc", "marc@test.com", Role.ADULT, null, hashed);
@@ -188,25 +195,25 @@ public class DataSeeder implements CommandLineRunner {
                     new String[]{"RENT:650", "BILLS:120", "SUBSCRIPTIONS:45", "TRANSPORT:75"});
         }
 
-        FamilyGroup elyneFamily = null;
-        if (!userRepo.existsByEmail("elyne@test.com")) {
-            elyneFamily = new FamilyGroup();
-            elyneFamily.setName("Elyne's Family");
-            elyneFamily.setCreatedAt(LocalDateTime.now());
-            elyneFamily.setUpdatedAt(LocalDateTime.now());
-            elyneFamily = familyGroupRepo.save(elyneFamily);
+        FamilyGroup victoriaFamily = null;
+        if (!userRepo.existsByEmail("victoria@test.com")) {
+            victoriaFamily = new FamilyGroup();
+            victoriaFamily.setName("Victoria's Family");
+            victoriaFamily.setCreatedAt(LocalDateTime.now());
+            victoriaFamily.setUpdatedAt(LocalDateTime.now());
+            victoriaFamily = familyGroupRepo.save(victoriaFamily);
 
-            User elyne = buildPersona("Elyne", "elyne@test.com", Role.PARENT, elyneFamily, hashed);
-            createFinancialProfile(elyne, 2600, "EUR", 1200,
+            User victoria = buildPersona("Victoria", "victoria@test.com", Role.PARENT, victoriaFamily, hashed);
+            createFinancialProfile(victoria, 2600, "EUR", 1200,
                     new String[]{"RENT:1100", "BILLS:180", "GROCERIES:450", "TRANSPORT:90", "SUBSCRIPTIONS:60"});
         }
 
         if (!userRepo.existsByEmail("lucas@test.com")) {
-            if (elyneFamily == null) {
-                elyneFamily = userRepo.findByEmail("elyne@test.com")
+            if (victoriaFamily == null) {
+                victoriaFamily = userRepo.findByEmail("victoria@test.com")
                         .map(User::getFamilyGroup).orElse(null);
             }
-            User lucas = buildPersona("Lucas", "lucas@test.com", Role.CHILD, elyneFamily, hashed);
+            User lucas = buildPersona("Lucas", "lucas@test.com", Role.CHILD, victoriaFamily, hashed);
             createFinancialProfile(lucas, 20, "EUR", 35, new String[0]);
         }
     }
@@ -222,6 +229,8 @@ public class DataSeeder implements CommandLineRunner {
         return userRepo.save(u);
     }
 
+    // Utilisés uniquement par la génération en masse désactivée.
+    /*
     private User buildUser(String firstName, String lastName, Role role, FamilyGroup group, String hashed) {
         User u = new User();
         u.setFirstName(firstName);
@@ -251,6 +260,7 @@ public class DataSeeder implements CommandLineRunner {
                 .replace("ź", "z").replace("ą", "a").replace("ę", "e").replace("ł", "l")
                 .replaceAll("[^a-z0-9]", "");
     }
+    */
 
     private void createFinancialProfile(User user, int salary, String currency, int balance, String[] expLines) {
         FinancialProfile fp = new FinancialProfile();
