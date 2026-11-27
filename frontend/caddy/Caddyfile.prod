@@ -1,0 +1,20 @@
+# Production (docker-compose.prod.yml) : HTTPS
+import app.caddy
+
+{
+	# Le port 80 de la VM appartient à une autre application
+	auto_https disable_redirects
+	# Pas de HTTP/3 : Caddy annoncerait le port 443, alors que le port public est 8443
+	servers {
+		protocols h1 h2
+	}
+}
+
+# Écoute sur 443 dans le conteneur, publié en 8443 sur la VM
+{$DOMAIN} {
+	tls {
+		dns duckdns {$DUCKDNS_TOKEN}
+		resolvers 1.1.1.1
+	}
+	import app
+}

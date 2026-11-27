@@ -1,0 +1,6 @@
+# Local (docker-compose.yml) : HTTP simple
+import app.caddy
+
+:80 {
+	import app
+}

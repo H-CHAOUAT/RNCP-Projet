@@ -11,11 +11,14 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM nginx:alpine
+# Caddy avec le module DuckDNS (certificat via le challenge DNS-01)
+FROM caddy:2-builder AS caddy-builder
+RUN xcaddy build --with github.com/caddy-dns/duckdns
 
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+FROM caddy:2
 
-EXPOSE 80
+COPY --from=caddy-builder /usr/bin/caddy /usr/bin/caddy
+COPY --from=builder /app/dist /srv
+COPY caddy/ /etc/caddy/
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 80 443

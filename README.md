@@ -77,6 +77,30 @@ Vue globale de l’architecture technique :
     ⏹️ Arrêter les services
         docker-compose down
 ---
+## 🌍 Déploiement (VM, HTTPS sur le port 8443)
+
+Seul le conteneur `frontend` (Caddy : HTTPS, fichiers React et relais de `/api`) est exposé ; le backend et PostgreSQL restent sur le réseau Docker.
+
+1. Créer un sous-domaine DuckDNS pointant vers l'IP publique de la VM et noter le token.
+2. Ouvrir le port TCP 8443 en entrée (Security List ou NSG sur OCI).
+3. Vérifier la VM : `ss -ltn | grep 8443` (aucun résultat = port libre), `free -h`, `df -h`, `docker compose version`.
+4. Envoyer le projet depuis sa racine :
+
+       rsync -avz --exclude .git --exclude .claude --exclude .idea --exclude node_modules \
+         --exclude target --exclude dist --exclude .env ./ user@IP:~/finfam/
+
+5. Sur la VM, dans `~/finfam` : `cp .env.prod.example .env && chmod 600 .env`, puis remplir `.env`.
+6. Lancer :
+
+       docker compose -f docker-compose.prod.yml up -d --build
+       docker compose -f docker-compose.prod.yml logs -f frontend backend
+
+L'application est disponible sur `https://<sous-domaine>.duckdns.org:8443`.
+Pour une mise à jour, refaire les étapes 4 et 6.
+
+Retrait complet : `docker compose -f docker-compose.prod.yml down -v --rmi all`, puis supprimer `~/finfam`, la règle 8443 et le domaine DuckDNS.
+
+---
 ## 💾 Structure du Projet
 ### Backend
 <p align="center"> <img src="docs/images/StructureBackend.png" alt="Backend Structure" width="700"/> </p>

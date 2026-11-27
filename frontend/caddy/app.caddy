@@ -1,0 +1,23 @@
+# Commun au local et à la prod : front React + relais de /api vers le backend
+(app) {
+	header {
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https:;"
+		# Applique ces valeurs à la fin, pour remplacer celles du backend sans doublon
+		defer
+	}
+
+	handle /api/* {
+		reverse_proxy backend:8080
+	}
+
+	handle {
+		root * /srv
+		# Les routes React (/login, ...) renvoient index.html
+		try_files {path} /index.html
+		file_server
+	}
+}

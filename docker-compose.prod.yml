@@ -1,0 +1,62 @@
+# Production (VM) : docker compose -f docker-compose.prod.yml up -d --build
+# Seul le frontend (Caddy) publie un port. Les variables viennent du fichier .env (voir .env.prod.example).
+name: finfam
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}
+      POSTGRES_DB: ${POSTGRES_DB:-finfamdb}
+      TZ: Europe/Paris
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-finfamdb}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD manquant dans .env}
+      SPRING_PROFILES_ACTIVE: prod
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET manquant dans .env}
+      SEED_PASSWORD: ${SEED_PASSWORD:?SEED_PASSWORD manquant dans .env}
+      ALLOWED_ORIGINS: https://${DOMAIN:?DOMAIN manquant dans .env}:8443
+      TZ: Europe/Paris
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=60
+    mem_limit: 768m
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Vide : le front appelle /api sur la même origine, relayé par Caddy
+        VITE_API_URL: ""
+    restart: unless-stopped
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile.prod", "--adapter", "caddyfile"]
+    ports:
+      - "8443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN manquant dans .env}
+      DUCKDNS_TOKEN: ${DUCKDNS_TOKEN:?DUCKDNS_TOKEN manquant dans .env}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

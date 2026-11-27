@@ -4,3 +4,5 @@ dist
 .git
 Dockerfile
 .env.local
+
+.env*
