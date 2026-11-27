@@ -84,19 +84,38 @@ Seul le conteneur `frontend` (Caddy : HTTPS, fichiers React et relais de `/api`)
 1. Créer un sous-domaine DuckDNS pointant vers l'IP publique de la VM et noter le token.
 2. Ouvrir le port TCP 8443 en entrée (Security List ou NSG sur OCI).
 3. Vérifier la VM : `ss -ltn | grep 8443` (aucun résultat = port libre), `free -h`, `df -h`, `docker compose version`.
-4. Envoyer le projet depuis sa racine :
+4. Sur la VM, cloner la branche à déployer (adapter `-b` si elle change) :
 
-       rsync -avz --exclude .git --exclude .claude --exclude .idea --exclude node_modules \
-         --exclude target --exclude dist --exclude .env ./ user@IP:~/finfam/
+       git clone -b feat/scrum-project https://github.com/H-CHAOUAT/RNCP-Projet.git ~/finfam
 
-5. Sur la VM, dans `~/finfam` : `cp .env.prod.example .env && chmod 600 .env`, puis remplir `.env`.
+   Si le dépôt est privé, utiliser l'adresse SSH `git@github.com:H-CHAOUAT/RNCP-Projet.git`, au choix :
+   - avec sa clé déjà chargée dans l'agent SSH, en se connectant par `ssh -A user@IP` (serveur de confiance uniquement ; la clé privée n'est pas copiée) ;
+   - avec une *deploy key* en lecture seule, ajoutée dans les réglages du dépôt.
+
+5. Dans `~/finfam` : `cp .env.prod.example .env && chmod 600 .env`, puis remplir `.env`.
+   Choisir `SEED_PASSWORD` avant le premier démarrage : le changer ensuite ne modifie pas les comptes déjà créés.
 6. Lancer :
 
        docker compose -f docker-compose.prod.yml up -d --build
        docker compose -f docker-compose.prod.yml logs -f frontend backend
 
 L'application est disponible sur `https://<sous-domaine>.duckdns.org:8443`.
-Pour une mise à jour, refaire les étapes 4 et 6.
+
+### Mettre à jour
+
+Sur son poste : commit puis `git push`. Ensuite, sur la VM :
+
+    cd ~/finfam
+    git pull
+    docker compose -f docker-compose.prod.yml up -d --build
+
+- `.env` n'est pas suivi par Git : `git pull` ne le modifie pas.
+- Si `.env.prod.example` contient une nouvelle variable, l'ajouter à la main dans `.env`.
+- La base et le certificat sont conservés. Ne pas utiliser `down -v`, qui les efface.
+- Ne pas lancer `git clean -x` ou `-X` (cela peut supprimer `.env`) et ne pas modifier les fichiers du projet sur la VM (risque de conflit).
+- Garder une copie des valeurs de `.env` en lieu sûr, par exemple dans un gestionnaire de mots de passe.
+
+### Retirer l'application
 
 Retrait complet : `docker compose -f docker-compose.prod.yml down -v --rmi all`, puis supprimer `~/finfam`, la règle 8443 et le domaine DuckDNS.
 

@@ -36,7 +36,7 @@ Les modes 1 et 2 partagent la même base. Si elle contient encore les anciens co
 1. Créer le sous-domaine DuckDNS avec l'IP publique de la VM.
 2. Ouvrir le port TCP 8443 en entrée dans OCI (Security List ou NSG).
 3. Sur la VM, vérifier que le port est libre (`ss -ltn | grep 8443` ne retourne rien) et qu'il reste de la RAM et du disque (`free -h`, `df -h`).
-4. Envoyer le projet avec la commande `rsync` du README.
+4. Sur la VM, cloner la branche à déployer avec la commande `git clone` du README. Pour une mise à jour, suivre sa section « Mettre à jour ».
 5. Dans `~/finfam` : `cp .env.prod.example .env && chmod 600 .env`, puis remplir `.env`.
 6. Lancer :
    ```bash
