@@ -26,13 +26,7 @@ export default function LoginForm() {
                 sessionStorage.setItem("token", data.token);
                 localStorage.setItem("user", JSON.stringify(data.user));
 
-                const hasSeenWelcome = localStorage.getItem(`welcome_seen_${data.user.id}`);
-                if (!hasSeenWelcome) {
-                    localStorage.setItem(`welcome_seen_${data.user.id}`, "1");
-                    navigate("/welcome");
-                } else {
-                    navigate("/dashboard");
-                }
+                navigate("/dashboard");
             } else {
                 setError(data.message || "Email ou mot de passe invalide.");
             }
